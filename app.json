@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "Splittable",
+    "slug": "splittable",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "splittable",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.splittable.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#6C63FF"
+      },
+      "package": "com.splittable.app",
+      "predictiveBackGestureEnabled": true
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-camera",
+      "expo-image-picker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Splittable to access your photos to attach receipts.",
+          "cameraPermission": "Allow Splittable to use your camera to capture receipts."
+        }
+      ]
+    ]
+  }
+}
