@@ -1,11 +1,177 @@
-import { View, Text, StyleSheet } from 'react-native';
-import { colors, fontSize } from '@/config/theme';
+import { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '@/hooks/useAuth';
+import { getGroup } from '@/services/groups.service';
+import { getUsers } from '@/services/users.service';
+import { MemberChip } from '@/components/groups/MemberChip';
+import { Card } from '@/components/shared/Card';
+import { Header } from '@/components/shared/Header';
+import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { Divider } from '@/components/shared/Divider';
+import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
+import type { Group, User } from '@/types';
 
 export default function GroupDetailScreen() {
+  const { groupId } = useLocalSearchParams<{ groupId: string }>();
+  const router = useRouter();
+  const { user } = useAuth();
+
+  const [group, setGroup] = useState<Group | null>(null);
+  const [members, setMembers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!groupId) return;
+
+    let cancelled = false;
+
+    async function load() {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const fetched = await getGroup(groupId);
+        if (cancelled) return;
+
+        if (!fetched) {
+          setError('Group not found.');
+          setLoading(false);
+          return;
+        }
+
+        setGroup(fetched);
+
+        const userDocs = await getUsers(fetched.members);
+        if (cancelled) return;
+        setMembers(userDocs);
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to load group.');
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    load();
+    return () => { cancelled = true; };
+  }, [groupId]);
+
+  if (loading) return <LoadingSpinner fullScreen />;
+
+  if (error || !group) {
+    return (
+      <View style={styles.container}>
+        <Header title="Group" onBack={() => router.back()} />
+        <EmptyState
+          icon="alert-circle-outline"
+          title="Error"
+          message={error ?? 'Group not found.'}
+        />
+      </View>
+    );
+  }
+
+  const isCreator = user?.id === group.createdBy;
+
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Group Detail</Text>
-      <Text style={styles.subtext}>Coming in Milestone 14</Text>
+      <Header title={group.name} onBack={() => router.back()} />
+
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Card style={styles.summaryCard}>
+          <Text style={styles.totalLabel}>Total Expenses</Text>
+          <Text style={styles.totalAmount}>
+            ${group.totalExpenses.toFixed(2)}
+          </Text>
+          <View style={styles.metaRow}>
+            <View style={styles.metaItem}>
+              <Ionicons name="people" size={14} color={colors.textMuted} />
+              <Text style={styles.metaText}>
+                {group.members.length} member{group.members.length !== 1 ? 's' : ''}
+              </Text>
+            </View>
+            <View style={styles.metaItem}>
+              <Ionicons name="key" size={14} color={colors.textMuted} />
+              <Text style={styles.metaText}>{group.inviteCode}</Text>
+            </View>
+          </View>
+        </Card>
+
+        <Text style={styles.sectionTitle}>Members</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.membersRow}
+        >
+          {members.map((member) => (
+            <MemberChip
+              key={member.id}
+              name={member.displayName}
+              photoURL={member.photoURL}
+              isCurrentUser={member.id === user?.id}
+            />
+          ))}
+          {isCreator && (
+            <TouchableOpacity
+              style={styles.addMemberChip}
+              onPress={() =>
+                router.push({
+                  pathname: '/(tabs)/groups/[groupId]/members',
+                  params: { groupId: group.id },
+                })
+              }
+            >
+              <View style={styles.addMemberIcon}>
+                <Ionicons name="add" size={20} color={colors.primary} />
+              </View>
+              <Text style={styles.addMemberLabel}>Manage</Text>
+            </TouchableOpacity>
+          )}
+        </ScrollView>
+
+        <Divider label="Expenses" />
+
+        <EmptyState
+          icon="receipt-outline"
+          title="No Expenses Yet"
+          message="Add your first expense to start splitting costs."
+          actionLabel="Add Expense"
+          onAction={() =>
+            router.push({
+              pathname: '/(tabs)/groups/[groupId]/add-expense',
+              params: { groupId: group.id },
+            })
+          }
+        />
+      </ScrollView>
+
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() =>
+          router.push({
+            pathname: '/(tabs)/groups/[groupId]/add-expense',
+            params: { groupId: group.id },
+          })
+        }
+        activeOpacity={0.85}
+      >
+        <Ionicons name="add" size={28} color={colors.textInverse} />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -14,17 +180,88 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: spacing.md,
+    gap: spacing.md,
+  },
+  summaryCard: {
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  totalLabel: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    fontWeight: fontWeight.medium,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: spacing.xs,
+  },
+  totalAmount: {
+    fontSize: fontSize.xxxl,
+    fontWeight: fontWeight.bold,
+    color: colors.textPrimary,
+    marginBottom: spacing.md,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    gap: spacing.lg,
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  metaText: {
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
+  },
+  sectionTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.textPrimary,
+  },
+  membersRow: {
+    gap: spacing.sm,
+    paddingBottom: spacing.xs,
+  },
+  addMemberChip: {
+    alignItems: 'center',
+    gap: spacing.xs,
+    width: 72,
+  },
+  addMemberIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  text: {
-    fontSize: fontSize.xl,
-    color: colors.textPrimary,
-    fontWeight: '600',
+  addMemberLabel: {
+    fontSize: fontSize.xs,
+    color: colors.primary,
+    fontWeight: fontWeight.medium,
   },
-  subtext: {
-    fontSize: fontSize.sm,
-    color: colors.textMuted,
-    marginTop: 8,
+  fab: {
+    position: 'absolute',
+    bottom: spacing.lg,
+    right: spacing.lg,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 8,
   },
 });
