@@ -7,8 +7,6 @@ interface BalanceRowProps {
   displayName: string;
   groupName: string;
   netBalance: number;
-  currency: string;
-  isCurrentUserOwed: boolean;
   onPress: () => void;
 }
 
@@ -16,19 +14,10 @@ export function BalanceRow({
   displayName,
   groupName,
   netBalance,
-  currency,
-  isCurrentUserOwed,
   onPress,
 }: BalanceRowProps) {
-  const isPositive = netBalance > 0;
+  const isOwedToYou = netBalance > 0;
   const absAmount = Math.abs(netBalance);
-
-  const getActionLabel = () => {
-    if (isCurrentUserOwed && isPositive) return 'Settle';
-    if (isCurrentUserOwed && !isPositive) return 'Pay';
-    if (!isCurrentUserOwed && isPositive) return 'Request';
-    return 'Pay';
-  };
 
   return (
     <TouchableOpacity
@@ -48,29 +37,29 @@ export function BalanceRow({
       <Text
         style={[
           styles.amount,
-          isPositive ? styles.positive : styles.negative,
+          isOwedToYou ? styles.positive : styles.negative,
         ]}
       >
-        {isPositive ? '+' : '-'}${absAmount.toFixed(2)}
+        {isOwedToYou ? '+' : '-'}${absAmount.toFixed(2)}
       </Text>
       <View
         style={[
           styles.actionButton,
-          isPositive ? styles.actionPositive : styles.actionNegative,
+          isOwedToYou ? styles.actionPositive : styles.actionNegative,
         ]}
       >
         <Text
           style={[
             styles.actionText,
-            isPositive ? styles.actionTextPositive : styles.actionTextNegative,
+            isOwedToYou ? styles.actionTextPositive : styles.actionTextNegative,
           ]}
         >
-          {getActionLabel()}
+          {isOwedToYou ? 'Settle' : 'Pay'}
         </Text>
         <Ionicons
           name="chevron-forward"
           size={12}
-          color={isPositive ? colors.success : colors.danger}
+          color={isOwedToYou ? colors.success : colors.danger}
         />
       </View>
     </TouchableOpacity>

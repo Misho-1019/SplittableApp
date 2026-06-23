@@ -124,6 +124,27 @@ export async function getSettlement(
   return buildSettlementFromDoc(snap.id, groupId, snap.data());
 }
 
+export async function getSettlementsBetweenUsers(
+  groupId: string,
+  userId1: string,
+  userId2: string,
+): Promise<Settlement[]> {
+  const q = query(
+    collection(db, 'groups', groupId, 'settlements'),
+    orderBy('createdAt', 'desc'),
+  );
+
+  const snapshot = await getDocs(q);
+
+  return snapshot.docs
+    .map((d) => buildSettlementFromDoc(d.id, groupId, d.data()))
+    .filter(
+      (s) =>
+        (s.fromUserId === userId1 && s.toUserId === userId2) ||
+        (s.fromUserId === userId2 && s.toUserId === userId1),
+    );
+}
+
 export async function updateSettlementStatus(
   groupId: string,
   settlementId: string,

@@ -12,9 +12,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { useExpenses } from '@/hooks/useExpenses';
 import { getGroup } from '@/services/groups.service';
 import { getUsers } from '@/services/users.service';
+import { getSettlementsBetweenUsers } from '@/services/settlements.service';
 import { MemberChip } from '@/components/groups/MemberChip';
 import { ExpenseCard } from '@/components/expenses/ExpenseCard';
 import { Card } from '@/components/shared/Card';
+import { Badge } from '@/components/shared/Badge';
 import { Header } from '@/components/shared/Header';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
@@ -32,6 +34,7 @@ export default function GroupDetailScreen() {
   const [members, setMembers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [settlementStatuses, setSettlementStatuses] = useState<Record<string, 'none' | 'pending' | 'completed'>>({});
 
   useEffect(() => {
     if (!groupId) return;
@@ -57,6 +60,26 @@ export default function GroupDetailScreen() {
         const userDocs = await getUsers(fetched.members);
         if (cancelled) return;
         setMembers(userDocs);
+
+        if (user?.id && fetched.members.length > 1) {
+          const statuses: Record<string, 'none' | 'pending' | 'completed'> = {};
+          for (const memberId of fetched.members) {
+            if (memberId === user.id) continue;
+            const existing = await getSettlementsBetweenUsers(
+              groupId,
+              user.id,
+              memberId,
+            );
+            if (existing.length > 0) {
+              const latest = existing[0];
+              statuses[memberId] =
+                latest.status === 'completed' ? 'completed' : 'pending';
+            } else {
+              statuses[memberId] = 'none';
+            }
+          }
+          if (!cancelled) setSettlementStatuses(statuses);
+        }
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Failed to load group.');
@@ -175,23 +198,37 @@ export default function GroupDetailScreen() {
             <Text style={styles.sectionTitle}>Balances</Text>
             {balances
               .filter((b) => Math.abs(b.netBalance) > 0.01 && b.userId !== user?.id)
-              .map((b) => (
-                <View key={b.userId} style={styles.balanceRow}>
-                  <Text style={styles.balanceName}>{b.displayName}</Text>
-                  <Text
-                    style={[
-                      styles.balanceAmount,
-                      b.netBalance > 0
-                        ? styles.balanceTextPositive
-                        : styles.balanceTextNegative,
-                    ]}
-                  >
-                    {b.netBalance > 0
-                      ? `+$${b.netBalance.toFixed(2)}`
-                      : `-$${Math.abs(b.netBalance).toFixed(2)}`}
-                  </Text>
-                </View>
-              ))}
+              .map((b) => {
+                const amountFromYou = -b.netBalance;
+                const isOwed = amountFromYou > 0;
+                const status = settlementStatuses[b.userId] ?? 'none';
+
+                return (
+                  <View key={b.userId} style={styles.balanceRow}>
+                    <View style={styles.balanceLeft}>
+                      <Text style={styles.balanceName}>{b.displayName}</Text>
+                      {status !== 'none' && (
+                        <Badge
+                          variant={status === 'completed' ? 'completed' : 'pending'}
+                          label={status === 'completed' ? 'Settled' : 'Awaiting'}
+                        />
+                      )}
+                    </View>
+                    <Text
+                      style={[
+                        styles.balanceAmount,
+                        isOwed
+                          ? styles.balanceTextPositive
+                          : styles.balanceTextNegative,
+                      ]}
+                    >
+                      {isOwed
+                        ? `+$${amountFromYou.toFixed(2)}`
+                        : `-$${Math.abs(amountFromYou).toFixed(2)}`}
+                    </Text>
+                  </View>
+                );
+              })}
           </View>
         )}
 
@@ -376,6 +413,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: spacing.xs,
+  },
+  balanceLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    flex: 1,
   },
   balanceName: {
     fontSize: fontSize.sm,

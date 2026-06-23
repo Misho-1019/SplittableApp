@@ -53,21 +53,23 @@ export default function BalancesListScreen() {
     .reduce((sum, b) => sum + b.netBalance, 0);
 
   const owedToYou = balances.filter(
-    (b) => b.netBalance > 0.01 && b.userId !== user.id,
-  );
-  const youOwe = balances.filter(
     (b) => b.netBalance < -0.01 && b.userId !== user.id,
   );
+  const youOwe = balances.filter(
+    (b) => b.netBalance > 0.01 && b.userId !== user.id,
+  );
 
-  const handleSettleUp = (balance: typeof balances[0]) => {
+  const handleSettleUp = (balance: typeof balances[0], direction: 'receive' | 'pay') => {
     router.push({
       pathname: '/(tabs)/balances/settle',
       params: {
         groupId: balance.groupId,
+        groupName: balance.groupName,
         toUserId: balance.userId,
         toUserName: balance.displayName,
         amount: Math.abs(balance.netBalance).toFixed(2),
         currency: balance.currency,
+        direction,
       },
     });
   };
@@ -84,9 +86,9 @@ export default function BalancesListScreen() {
 
   const data = [
     ...(owedToYou.length > 0 ? [{ type: 'divider' as const, key: 'owed-divider', label: 'You are owed' }] : []),
-    ...owedToYou.map((b) => ({ type: 'balance' as const, key: b.userId + b.groupId, ...b })),
+    ...owedToYou.map((b) => ({ type: 'balance' as const, key: b.userId + b.groupId, ...b, netBalance: Math.abs(b.netBalance), direction: 'receive' as const })),
     ...(youOwe.length > 0 ? [{ type: 'divider' as const, key: 'owe-divider', label: 'You owe' }] : []),
-    ...youOwe.map((b) => ({ type: 'balance' as const, key: b.userId + b.groupId, ...b })),
+    ...youOwe.map((b) => ({ type: 'balance' as const, key: b.userId + b.groupId, ...b, netBalance: -Math.abs(b.netBalance), direction: 'pay' as const })),
     ...(settlements.length > 0 ? [{ type: 'divider' as const, key: 'settlement-divider', label: 'Settlement History' }] : []),
     ...settlements.map((s) => ({ type: 'settlement' as const, key: s.id, settlement: s })),
   ];
@@ -133,9 +135,7 @@ export default function BalancesListScreen() {
                 displayName={item.displayName}
                 groupName={item.groupName}
                 netBalance={item.netBalance}
-                currency={item.currency}
-                isCurrentUserOwed={item.netBalance > 0 !== true}
-                onPress={() => handleSettleUp(item)}
+                onPress={() => handleSettleUp(item, item.direction)}
               />
             );
           }}
