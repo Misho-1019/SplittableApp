@@ -9,9 +9,11 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
+import { useExpenses } from '@/hooks/useExpenses';
 import { getGroup } from '@/services/groups.service';
 import { getUsers } from '@/services/users.service';
 import { MemberChip } from '@/components/groups/MemberChip';
+import { ExpenseCard } from '@/components/expenses/ExpenseCard';
 import { Card } from '@/components/shared/Card';
 import { Header } from '@/components/shared/Header';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -146,15 +148,18 @@ export default function GroupDetailScreen() {
 
         <Divider label="Expenses" />
 
-        <EmptyState
-          icon="receipt-outline"
-          title="No Expenses Yet"
-          message="Add your first expense to start splitting costs."
-          actionLabel="Add Expense"
-          onAction={() =>
+        <ExpenseList
+          groupId={group.id}
+          onAddExpense={() =>
             router.push({
               pathname: '/(tabs)/groups/[groupId]/add-expense',
               params: { groupId: group.id },
+            })
+          }
+          onExpensePress={(expenseId) =>
+            router.push({
+              pathname: '/(tabs)/groups/[groupId]/expenses/[expenseId]',
+              params: { groupId: group.id, expenseId },
             })
           }
         />
@@ -172,6 +177,46 @@ export default function GroupDetailScreen() {
       >
         <Ionicons name="add" size={28} color={colors.textInverse} />
       </TouchableOpacity>
+    </View>
+  );
+}
+
+function ExpenseList({
+  groupId,
+  onAddExpense,
+  onExpensePress,
+}: {
+  groupId: string;
+  onAddExpense: () => void;
+  onExpensePress: (expenseId: string) => void;
+}) {
+  const { expenses, loading } = useExpenses(groupId);
+
+  if (loading && expenses.length === 0) {
+    return <LoadingSpinner />;
+  }
+
+  if (expenses.length === 0) {
+    return (
+      <EmptyState
+        icon="receipt-outline"
+        title="No Expenses Yet"
+        message="Add your first expense to start splitting costs."
+        actionLabel="Add Expense"
+        onAction={onAddExpense}
+      />
+    );
+  }
+
+  return (
+    <View style={{ gap: spacing.sm }}>
+      {expenses.map((expense) => (
+        <ExpenseCard
+          key={expense.id}
+          expense={expense}
+          onPress={() => onExpensePress(expense.id)}
+        />
+      ))}
     </View>
   );
 }
