@@ -14,6 +14,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { getGroup } from '@/services/groups.service';
 import { getUsers } from '@/services/users.service';
 import { createExpense } from '@/services/expenses.service';
+import { uploadReceipt } from '@/services/storage.service';
+import { useImagePicker } from '@/hooks/useImagePicker';
 import { Header } from '@/components/shared/Header';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Input } from '@/components/shared/Input';
@@ -24,6 +26,7 @@ import { SplitTypePicker } from '@/components/expenses/SplitTypePicker';
 import { EqualSplit } from '@/components/expenses/EqualSplit';
 import { PercentageSplit } from '@/components/expenses/PercentageSplit';
 import { CustomSplit } from '@/components/expenses/CustomSplit';
+import { ReceiptThumbnail } from '@/components/expenses/ReceiptThumbnail';
 import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
 import type { Group, User, SplitType, SplitDetail } from '@/types';
 
@@ -44,6 +47,13 @@ export default function AddExpenseScreen() {
   const [customShares, setCustomShares] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  const {
+    image: receiptUri,
+    pickFromCamera,
+    pickFromGallery,
+    removeImage: removeReceipt,
+  } = useImagePicker({ quality: 0.7 });
 
   const paidByUser = members.find((m) => m.id === paidBy);
   const amountNum = parseFloat(amount) || 0;
@@ -142,7 +152,7 @@ export default function AddExpenseScreen() {
     setError('');
 
     try {
-      await createExpense(group.id, {
+      const expense = await createExpense(group.id, {
         description: description.trim(),
         amount: amountNum,
         currency: 'USD',
@@ -154,6 +164,16 @@ export default function AddExpenseScreen() {
         receiptPhotoThumbnailURL: null,
         createdBy: user.id,
       });
+
+      if (receiptUri) {
+        try {
+          const { downloadURL } = await uploadReceipt(group.id, expense.id, receiptUri);
+          expense.receiptPhotoURL = downloadURL;
+        } catch {
+          // Receipt upload fails silently — expense still saved
+        }
+      }
+
       router.back();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save expense.');
@@ -259,6 +279,32 @@ export default function AddExpenseScreen() {
             />
           )}
 
+          <Text style={styles.label}>Receipt (optional)</Text>
+          {receiptUri ? (
+            <ReceiptThumbnail
+              uri={receiptUri}
+              onPress={() => {}}
+              onRemove={removeReceipt}
+            />
+          ) : (
+            <View style={styles.receiptButtons}>
+              <TouchableOpacity
+                style={styles.receiptButton}
+                onPress={pickFromCamera}
+              >
+                <Ionicons name="camera" size={20} color={colors.primary} />
+                <Text style={styles.receiptButtonText}>Camera</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.receiptButton}
+                onPress={pickFromGallery}
+              >
+                <Ionicons name="images" size={20} color={colors.primary} />
+                <Text style={styles.receiptButtonText}>Gallery</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
           <Button
@@ -326,5 +372,27 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
     borderRadius: borderRadius.sm,
     overflow: 'hidden',
+  },
+  receiptButtons: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  receiptButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderStyle: 'dashed',
+    borderRadius: borderRadius.md,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.surface,
+  },
+  receiptButtonText: {
+    fontSize: fontSize.sm,
+    color: colors.primary,
+    fontWeight: fontWeight.medium,
   },
 });
