@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -21,6 +21,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { Divider } from '@/components/shared/Divider';
 import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
 import type { Group, User } from '@/types';
+import { calculateGroupBalances } from '@/utils/calculateBalances';
 
 export default function GroupDetailScreen() {
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
@@ -69,6 +70,24 @@ export default function GroupDetailScreen() {
     return () => { cancelled = true; };
   }, [groupId]);
 
+  const { expenses } = useExpenses(groupId ?? undefined);
+
+  const balances = useMemo(() => {
+    if (!group || members.length === 0) return [];
+    return calculateGroupBalances(
+      expenses,
+      group.id,
+      group.name,
+      'USD',
+      members.map((m) => ({ id: m.id, displayName: m.displayName })),
+    );
+  }, [expenses, group, members]);
+
+  const currentUserBalance = useMemo(
+    () => balances.find((b) => b.userId === user?.id),
+    [balances, user?.id],
+  );
+
   if (loading) return <LoadingSpinner fullScreen />;
 
   if (error || !group) {
@@ -113,6 +132,68 @@ export default function GroupDetailScreen() {
             </View>
           </View>
         </Card>
+
+        {currentUserBalance && Math.abs(currentUserBalance.netBalance) > 0.01 && (
+          <View
+            style={[
+              styles.balanceBanner,
+              currentUserBalance.netBalance > 0
+                ? styles.balancePositive
+                : styles.balanceNegative,
+            ]}
+          >
+            <Ionicons
+              name={
+                currentUserBalance.netBalance > 0
+                  ? 'trending-up'
+                  : 'trending-down'
+              }
+              size={18}
+              color={
+                currentUserBalance.netBalance > 0
+                  ? colors.success
+                  : colors.danger
+              }
+            />
+            <Text
+              style={[
+                styles.balanceText,
+                currentUserBalance.netBalance > 0
+                  ? styles.balanceTextPositive
+                  : styles.balanceTextNegative,
+              ]}
+            >
+              {currentUserBalance.netBalance > 0
+                ? `You are owed $${currentUserBalance.netBalance.toFixed(2)}`
+                : `You owe $${Math.abs(currentUserBalance.netBalance).toFixed(2)}`}
+            </Text>
+          </View>
+        )}
+
+        {balances.length > 0 && (
+          <View style={styles.balancesList}>
+            <Text style={styles.sectionTitle}>Balances</Text>
+            {balances
+              .filter((b) => Math.abs(b.netBalance) > 0.01 && b.userId !== user?.id)
+              .map((b) => (
+                <View key={b.userId} style={styles.balanceRow}>
+                  <Text style={styles.balanceName}>{b.displayName}</Text>
+                  <Text
+                    style={[
+                      styles.balanceAmount,
+                      b.netBalance > 0
+                        ? styles.balanceTextPositive
+                        : styles.balanceTextNegative,
+                    ]}
+                  >
+                    {b.netBalance > 0
+                      ? `+$${b.netBalance.toFixed(2)}`
+                      : `-$${Math.abs(b.netBalance).toFixed(2)}`}
+                  </Text>
+                </View>
+              ))}
+          </View>
+        )}
 
         <Text style={styles.sectionTitle}>Members</Text>
         <ScrollView
@@ -263,6 +344,47 @@ const styles = StyleSheet.create({
   metaText: {
     fontSize: fontSize.xs,
     color: colors.textMuted,
+  },
+  balanceBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
+  },
+  balancePositive: {
+    backgroundColor: '#E8F5E9',
+  },
+  balanceNegative: {
+    backgroundColor: '#FFEBEE',
+  },
+  balanceText: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+  },
+  balanceTextPositive: {
+    color: colors.success,
+  },
+  balanceTextNegative: {
+    color: colors.danger,
+  },
+  balancesList: {
+    gap: spacing.sm,
+  },
+  balanceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.xs,
+  },
+  balanceName: {
+    fontSize: fontSize.sm,
+    color: colors.textPrimary,
+    fontWeight: fontWeight.medium,
+  },
+  balanceAmount: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
   },
   sectionTitle: {
     fontSize: fontSize.lg,
