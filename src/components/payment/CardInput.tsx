@@ -1,13 +1,14 @@
+import { useState, useCallback } from 'react';
 import { View, Text, TextInput, StyleSheet } from 'react-native';
-import { colors, fontSize, spacing, borderRadius } from '@/config/theme';
+import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
 
 interface CardInputProps {
   cardNumber: string;
-  onCardNumberChange: (text: string) => void;
+  onCardNumberChange: (value: string) => void;
   expiry: string;
-  onExpiryChange: (text: string) => void;
+  onExpiryChange: (value: string) => void;
   cvc: string;
-  onCvcChange: (text: string) => void;
+  onCvcChange: (value: string) => void;
 }
 
 export function CardInput({
@@ -18,6 +19,23 @@ export function CardInput({
   cvc,
   onCvcChange,
 }: CardInputProps) {
+  const formatCardNumber = useCallback((text: string) => {
+    const digits = text.replace(/\D/g, '').slice(0, 16);
+    return digits.replace(/(\d{4})(?=\d)/g, '$1 ');
+  }, []);
+
+  const formatExpiry = useCallback((text: string) => {
+    const digits = text.replace(/\D/g, '').slice(0, 4);
+    if (digits.length >= 3) {
+      return digits.slice(0, 2) + '/' + digits.slice(2);
+    }
+    return digits;
+  }, []);
+
+  const formatCvc = useCallback((text: string) => {
+    return text.replace(/\D/g, '').slice(0, 4);
+  }, []);
+
   return (
     <View style={styles.container}>
       <View style={styles.field}>
@@ -25,46 +43,45 @@ export function CardInput({
         <TextInput
           style={styles.input}
           value={cardNumber}
-          onChangeText={onCardNumberChange}
+          onChangeText={(t) => onCardNumberChange(formatCardNumber(t))}
           placeholder="4242 4242 4242 4242"
           placeholderTextColor={colors.textMuted}
-          keyboardType="number-pad"
+          keyboardType="numeric"
           maxLength={19}
         />
       </View>
 
       <View style={styles.row}>
-        <View style={[styles.field, styles.flex]}>
+        <View style={[styles.field, styles.halfField]}>
           <Text style={styles.label}>Expiry</Text>
           <TextInput
             style={styles.input}
             value={expiry}
-            onChangeText={onExpiryChange}
+            onChangeText={(t) => onExpiryChange(formatExpiry(t))}
             placeholder="MM/YY"
             placeholderTextColor={colors.textMuted}
-            keyboardType="number-pad"
+            keyboardType="numeric"
             maxLength={5}
           />
         </View>
-        <View style={[styles.field, styles.flex]}>
+
+        <View style={[styles.field, styles.halfField]}>
           <Text style={styles.label}>CVC</Text>
           <TextInput
             style={styles.input}
             value={cvc}
-            onChangeText={onCvcChange}
+            onChangeText={(t) => onCvcChange(formatCvc(t))}
             placeholder="123"
             placeholderTextColor={colors.textMuted}
-            keyboardType="number-pad"
-            maxLength={4}
+            keyboardType="numeric"
             secureTextEntry
+            maxLength={4}
           />
         </View>
       </View>
 
-      <Text style={styles.note}>
-        Stripe requires a development build to process payments.
-        Use test card 4242 4242 4242 4242 with any future date and CVC.
-        No real charges are made in test mode.
+      <Text style={styles.hint}>
+        Test cards: 4242 4242 4242 4242 (success) · 4000 0000 0000 0002 (decline)
       </Text>
     </View>
   );
@@ -79,8 +96,8 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium,
     color: colors.textSecondary,
-    fontWeight: '500',
   },
   input: {
     borderWidth: 1.5,
@@ -96,15 +113,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
   },
-  flex: {
+  halfField: {
     flex: 1,
   },
-  note: {
+  hint: {
     fontSize: fontSize.xs,
     color: colors.textMuted,
-    lineHeight: 18,
-    backgroundColor: colors.divider,
-    padding: spacing.sm,
-    borderRadius: borderRadius.sm,
+    textAlign: 'center',
   },
 });

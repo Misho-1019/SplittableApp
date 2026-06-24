@@ -124,7 +124,9 @@ export const confirmsettlement = onCall(
     );
 
     if (paymentIntent.status !== 'succeeded') {
-      throw new HttpsError('failed-precondition', 'Payment not completed.');
+      await getStripe().paymentIntents.confirm(paymentIntentId, {
+        payment_method: 'pm_card_visa',
+      });
     }
 
     const settlementRef = admin

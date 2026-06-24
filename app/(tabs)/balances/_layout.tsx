@@ -9,8 +9,6 @@ export default function BalancesLayout() {
         contentStyle: { backgroundColor: colors.background },
         animation: 'slide_from_right',
       }}
-    >
-      <Stack.Screen name="index" />
-    </Stack>
+    />
   );
 }

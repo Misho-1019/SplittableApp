@@ -226,7 +226,7 @@ export default function SettleUpScreen() {
             <Pressable
               onPress={() =>
                 router.push({
-                  pathname: '/(tabs)/balances/payment/index',
+                  pathname: '/(tabs)/balances/payment',
                   params: {
                     amount: params.amount,
                     toUserName: params.toUserName,

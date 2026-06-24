@@ -9,10 +9,6 @@ export default function GroupsLayout() {
         contentStyle: { backgroundColor: colors.background },
         animation: 'slide_from_right',
       }}
-    >
-      <Stack.Screen name="index" />
-      <Stack.Screen name="add" />
-      <Stack.Screen name="[groupId]" />
-    </Stack>
+    />
   );
 }

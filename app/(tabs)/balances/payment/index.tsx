@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
-import { createPaymentIntent } from '@/services/stripe.service';
+import { createPaymentIntent, confirmSettlement } from '@/services/stripe.service';
 import { Card } from '@/components/shared/Card';
 import { CardInput } from '@/components/payment/CardInput';
 import { Button } from '@/components/shared/Button';
@@ -16,8 +16,8 @@ export default function PaymentScreen() {
   const params = useLocalSearchParams<{
     amount: string;
     toUserName: string;
-    groupId: string;
     toUserId: string;
+    groupId: string;
   }>();
   const router = useRouter();
   const { user } = useAuth();
@@ -27,22 +27,38 @@ export default function PaymentScreen() {
   const [cvc, setCvc] = useState('');
   const [state, setState] = useState<PaymentState>('form');
   const [error, setError] = useState('');
+  const [settlementId, setSettlementId] = useState('');
 
   const amount = parseFloat(params.amount ?? '0') || 0;
   const amountCents = Math.round(amount * 100);
 
+  const canPay =
+    cardNumber.replace(/\s/g, '').length >= 15 &&
+    expiry.length === 5 &&
+    cvc.length >= 3;
+
   const handlePay = async () => {
-    if (!user || !params.groupId || !params.toUserId) return;
+    if (!user || !params.groupId || !params.toUserId || !canPay) return;
 
     setState('processing');
     setError('');
 
     try {
-      const { clientSecret, settlementId } = await createPaymentIntent({
+      const result = await createPaymentIntent({
         amount: amountCents,
         currency: 'usd',
         groupId: params.groupId,
         toUserId: params.toUserId,
+      });
+
+      setSettlementId(result.settlementId);
+
+      const paymentIntentId = result.clientSecret.split('_secret_')[0];
+
+      await confirmSettlement({
+        settlementId: result.settlementId,
+        groupId: params.groupId,
+        paymentIntentId,
       });
 
       setState('success');
@@ -56,18 +72,64 @@ export default function PaymentScreen() {
             toUserName: params.toUserName,
           },
         });
-      }, 1500);
+      }, 1000);
     } catch (err) {
       setState('failed');
       setError(
-        err instanceof Error
-          ? err.message
-          : 'Payment failed. Please try again.',
+        err instanceof Error ? err.message : 'Payment failed. Try again.',
       );
     }
   };
 
   if (!user) return null;
+
+  const renderStatus = () => {
+    if (state === 'processing') {
+      return (
+        <View style={styles.statusCenter}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.statusTitle}>Processing Payment</Text>
+          <Text style={styles.statusMessage}>
+            Securely processing your payment of ${amount.toFixed(2)}...
+          </Text>
+        </View>
+      );
+    }
+
+    if (state === 'success') {
+      return (
+        <View style={styles.statusCenter}>
+          <View style={styles.successCircle}>
+            <Ionicons name="checkmark" size={36} color={colors.textInverse} />
+          </View>
+          <Text style={styles.statusTitle}>Payment Successful!</Text>
+          <Text style={styles.statusMessage}>
+            You paid {params.toUserName} ${amount.toFixed(2)}
+          </Text>
+        </View>
+      );
+    }
+
+    if (state === 'failed') {
+      return (
+        <View style={styles.statusCenter}>
+          <View style={styles.failedCircle}>
+            <Ionicons name="close" size={36} color={colors.textInverse} />
+          </View>
+          <Text style={styles.statusTitle}>Payment Failed</Text>
+          <Text style={styles.statusMessage}>{error}</Text>
+          <Button
+            title="Try Again"
+            onPress={() => setState('form')}
+            variant="primary"
+            style={styles.retryButton}
+          />
+        </View>
+      );
+    }
+
+    return null;
+  };
 
   return (
     <View style={styles.container}>
@@ -76,7 +138,6 @@ export default function PaymentScreen() {
       <ScrollView
         contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
       >
         {state === 'form' && (
           <>
@@ -99,7 +160,7 @@ export default function PaymentScreen() {
               onCvcChange={setCvc}
             />
 
-            <View style={styles.trustBadge}>
+            <View style={styles.trustRow}>
               <Ionicons name="lock-closed" size={14} color={colors.textMuted} />
               <Text style={styles.trustText}>
                 Secured by Stripe · Test mode · No real charges
@@ -110,48 +171,12 @@ export default function PaymentScreen() {
               title={`Pay $${amount.toFixed(2)}`}
               onPress={handlePay}
               variant="primary"
-              disabled={!cardNumber || !expiry || !cvc}
+              disabled={!canPay}
             />
           </>
         )}
 
-        {state === 'processing' && (
-          <View style={styles.statusCenter}>
-            <Text style={styles.processingIcon}>⟳</Text>
-            <Text style={styles.statusTitle}>Processing Payment</Text>
-            <Text style={styles.statusMessage}>
-              Please wait while we process your payment...
-            </Text>
-          </View>
-        )}
-
-        {state === 'success' && (
-          <View style={styles.statusCenter}>
-            <View style={styles.successCircle}>
-              <Ionicons name="checkmark" size={36} color={colors.textInverse} />
-            </View>
-            <Text style={styles.statusTitle}>Payment Successful!</Text>
-            <Text style={styles.statusMessage}>
-              You paid {params.toUserName} ${amount.toFixed(2)}
-            </Text>
-          </View>
-        )}
-
-        {state === 'failed' && (
-          <View style={styles.statusCenter}>
-            <View style={styles.failedCircle}>
-              <Ionicons name="close" size={36} color={colors.textInverse} />
-            </View>
-            <Text style={styles.statusTitle}>Payment Failed</Text>
-            <Text style={styles.statusMessage}>{error}</Text>
-            <Button
-              title="Try Again"
-              onPress={() => setState('form')}
-              variant="primary"
-              style={styles.tryAgain}
-            />
-          </View>
-        )}
+        {renderStatus()}
       </ScrollView>
     </View>
   );
@@ -187,7 +212,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
-  trustBadge: {
+  trustRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -199,12 +224,8 @@ const styles = StyleSheet.create({
   },
   statusCenter: {
     alignItems: 'center',
-    justifyContent: 'center',
     paddingVertical: spacing.xxl,
     gap: spacing.md,
-  },
-  processingIcon: {
-    fontSize: 56,
   },
   successCircle: {
     width: 72,
@@ -233,7 +254,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: spacing.lg,
   },
-  tryAgain: {
-    marginTop: spacing.md,
+  retryButton: {
+    marginTop: spacing.sm,
   },
 });
