@@ -51,12 +51,18 @@ export async function register(
   const credential = await createUserWithEmailAndPassword(auth, email, password);
   const user = credential.user;
 
-  await setDoc(doc(db, 'users', user.uid), {
-    email,
-    displayName,
-    photoURL: null,
-    createdAt: serverTimestamp(),
-  });
+  try {
+    await setDoc(doc(db, 'users', user.uid), {
+      email,
+      displayName,
+      photoURL: null,
+      createdAt: serverTimestamp(),
+    });
+  } catch (error) {
+    // Rollback: delete the Firebase Auth user if Firestore write fails
+    await user.delete();
+    throw error;
+  }
 
   return {
     id: user.uid,

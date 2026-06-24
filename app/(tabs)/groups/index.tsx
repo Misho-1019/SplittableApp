@@ -77,16 +77,11 @@ export default function GroupListScreen() {
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
-            <GroupCard
-              group={item}
-              onPress={() =>
-                router.push({
-                  pathname: '/(tabs)/groups/[groupId]',
-                  params: { groupId: item.id },
-                })
-              }
-              onLongPress={() => setDeleteTarget(item.id)}
-            />
+              <GroupCard
+                group={item}
+                onPress={() => router.push({ pathname: '/(tabs)/groups/[groupId]', params: { groupId: item.id } })}
+                onDelete={() => setDeleteTarget(item.id)}
+              />
           )}
           refreshControl={
             <RefreshControl refreshing={loading} tintColor={colors.primary} />

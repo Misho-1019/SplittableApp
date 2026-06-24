@@ -89,25 +89,32 @@ export default function PaymentScreen() {
     if (state === 'success') {
       return (
         <View style={styles.statusCenter}>
-          <AnimatedCheckmark
-            size={88}
-            onDone={() => {
-              setTimeout(() => {
-                router.replace({
-                  pathname: '/(tabs)/balances/payment/confirmation',
-                  params: {
-                    success: 'true',
-                    amount: params.amount,
-                    toUserName: params.toUserName,
-                  },
-                });
-              }, 1000);
-            }}
-          />
-          <Text style={[styles.statusTitle, { color: colors.textPrimary }]}>Payment Successful!</Text>
+          <AnimatedCheckmark size={88} onDone={() => {}} />
+          <Text style={[styles.statusTitle, { color: colors.textPrimary }]}>
+            Payment Successful
+          </Text>
           <Text style={[styles.statusMessage, { color: colors.textSecondary }]}>
             You paid {params.toUserName} ${amount.toFixed(2)}
           </Text>
+          <View style={[styles.detailCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.detailRow}>
+              <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Paid to</Text>
+              <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{params.toUserName}</Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Amount</Text>
+              <Text style={[styles.detailValue, { color: colors.textPrimary }]}>${amount.toFixed(2)}</Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Method</Text>
+              <Text style={[styles.detailValue, { color: colors.textPrimary }]}>Card (Stripe)</Text>
+            </View>
+          </View>
+          <Button
+            title="Back to Balances"
+            onPress={() => router.replace('/(tabs)/balances')}
+            variant="primary"
+          />
         </View>
       );
     }
@@ -242,5 +249,25 @@ const styles = StyleSheet.create({
   },
   retryButton: {
     marginTop: spacing.sm,
+  },
+  detailCard: {
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    padding: spacing.md,
+    width: '100%',
+    gap: spacing.sm,
+    marginVertical: spacing.xs,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  detailLabel: {
+    fontSize: fontSize.sm,
+  },
+  detailValue: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
   },
 });

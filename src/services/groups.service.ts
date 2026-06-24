@@ -2,6 +2,7 @@ import {
   collection,
   doc,
   getDoc,
+  getDocs,
   setDoc,
   updateDoc,
   deleteDoc,
@@ -14,7 +15,8 @@ import {
   arrayRemove,
   Timestamp,
 } from 'firebase/firestore';
-import { db } from '@/config/firebase';
+import { ref, listAll, deleteObject } from 'firebase/storage';
+import { db, storage } from '@/config/firebase';
 import type { Group } from '@/types';
 
 function generateInviteCode(): string {
@@ -103,6 +105,33 @@ export async function getGroup(groupId: string): Promise<Group | null> {
 }
 
 export async function deleteGroup(groupId: string): Promise<void> {
+  // Delete all expenses in the group subcollection
+  const expensesSnap = await getDocs(
+    collection(db, 'groups', groupId, 'expenses'),
+  );
+  for (const expDoc of expensesSnap.docs) {
+    await deleteDoc(doc(db, 'groups', groupId, 'expenses', expDoc.id));
+  }
+
+  // Delete all settlements in the group subcollection
+  const settlementsSnap = await getDocs(
+    collection(db, 'groups', groupId, 'settlements'),
+  );
+  for (const setDoc of settlementsSnap.docs) {
+    await deleteDoc(doc(db, 'groups', groupId, 'settlements', setDoc.id));
+  }
+
+  // Best-effort: delete receipt files from Storage
+  try {
+    const receiptRef = ref(storage, `receipts/${groupId}`);
+    const listResult = await listAll(receiptRef);
+    for (const item of listResult.items) {
+      await deleteObject(item);
+    }
+  } catch {
+    // Storage cleanup is non-critical; continue with doc deletion
+  }
+
   await deleteDoc(doc(db, 'groups', groupId));
 }
 

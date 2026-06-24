@@ -1,4 +1,5 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Swipeable } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/context/ThemeContext';
 import { fontSize, fontWeight, spacing, borderRadius, shadow } from '@/config/theme';
@@ -7,46 +8,64 @@ import type { Group } from '@/types';
 interface GroupCardProps {
   group: Group;
   onPress: () => void;
-  onLongPress?: () => void;
+  onDelete?: () => void;
 }
 
-export function GroupCard({ group, onPress, onLongPress }: GroupCardProps) {
+export function GroupCard({ group, onPress, onDelete }: GroupCardProps) {
   const { colors } = useTheme();
   const memberCount = group.members.length;
 
-  return (
-    <TouchableOpacity
-      style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.border }]}
-      onPress={onPress}
-      onLongPress={onLongPress}
-      activeOpacity={0.7}
-    >
-      <View style={styles.iconContainer}>
-        <Ionicons name="people" size={24} color={colors.primary} />
-      </View>
+  const renderRightActions = () => {
+    if (!onDelete) return null;
+    return (
+      <TouchableOpacity
+        style={[styles.deleteAction, { backgroundColor: colors.danger }]}
+        onPress={onDelete}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="trash-outline" size={22} color={colors.textInverse} />
+        <Text style={[styles.deleteText, { color: colors.textInverse }]}>Delete</Text>
+      </TouchableOpacity>
+    );
+  };
 
-      <View style={styles.content}>
-        <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
-          {group.name}
-        </Text>
-        <View style={styles.meta}>
-          <View style={styles.metaItem}>
-            <Ionicons name="person" size={12} color={colors.textMuted} />
-            <Text style={[styles.metaText, { color: colors.textMuted }]}>
-              {memberCount} member{memberCount !== 1 ? 's' : ''}
-            </Text>
-          </View>
-          <View style={styles.metaItem}>
-            <Ionicons name="cash" size={12} color={colors.textMuted} />
-            <Text style={[styles.metaText, { color: colors.textMuted }]}>
-              ${group.totalExpenses.toFixed(2)}
-            </Text>
+  return (
+    <Swipeable
+      renderRightActions={renderRightActions}
+      overshootRight={false}
+    >
+      <TouchableOpacity
+        style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.border }]}
+        onPress={onPress}
+        activeOpacity={0.7}
+      >
+        <View style={styles.iconContainer}>
+          <Ionicons name="people" size={24} color={colors.primary} />
+        </View>
+
+        <View style={styles.content}>
+          <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
+            {group.name}
+          </Text>
+          <View style={styles.meta}>
+            <View style={styles.metaItem}>
+              <Ionicons name="person" size={12} color={colors.textMuted} />
+              <Text style={[styles.metaText, { color: colors.textMuted }]}>
+                {memberCount} member{memberCount !== 1 ? 's' : ''}
+              </Text>
+            </View>
+            <View style={styles.metaItem}>
+              <Ionicons name="cash" size={12} color={colors.textMuted} />
+              <Text style={[styles.metaText, { color: colors.textMuted }]}>
+                ${group.totalExpenses.toFixed(2)}
+              </Text>
+            </View>
           </View>
         </View>
-      </View>
 
-      <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-    </TouchableOpacity>
+        <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+      </TouchableOpacity>
+    </Swipeable>
   );
 }
 
@@ -87,5 +106,17 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: fontSize.xs,
+  },
+  deleteAction: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 80,
+    borderRadius: borderRadius.lg,
+    marginLeft: spacing.sm,
+    gap: spacing.xs,
+  },
+  deleteText: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.semibold,
   },
 });

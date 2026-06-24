@@ -4,6 +4,8 @@ import {
   getDoc,
   setDoc,
   deleteDoc,
+  updateDoc,
+  increment,
   query,
   where,
   orderBy,
@@ -53,6 +55,11 @@ export async function createExpense(
     createdAt: serverTimestamp(),
   });
 
+  await updateDoc(doc(db, 'groups', groupId), {
+    totalExpenses: increment(data.amount),
+    updatedAt: serverTimestamp(),
+  });
+
   return {
     ...expense,
     createdAt: Timestamp.now(),
@@ -96,5 +103,14 @@ export async function deleteExpense(
   groupId: string,
   expenseId: string,
 ): Promise<void> {
-  await deleteDoc(doc(db, 'groups', groupId, 'expenses', expenseId));
+  const expenseSnap = await getDoc(
+    doc(db, 'groups', groupId, 'expenses', expenseId),
+  );
+  if (expenseSnap.exists()) {
+    const amount = expenseSnap.data().amount as number;
+    await deleteDoc(doc(db, 'groups', groupId, 'expenses', expenseId));
+    await updateDoc(doc(db, 'groups', groupId), {
+      totalExpenses: increment(-amount),
+    });
+  }
 }
