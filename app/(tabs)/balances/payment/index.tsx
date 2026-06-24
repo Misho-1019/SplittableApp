@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
 import { createPaymentIntent, confirmSettlement } from '@/services/stripe.service';
 import { Card } from '@/components/shared/Card';
 import { CardInput } from '@/components/payment/CardInput';
+import { PaymentProgressModal } from '@/components/payment/PaymentProgressModal';
+import { AnimatedCheckmark } from '@/components/shared/AnimatedCheckmark';
 import { Button } from '@/components/shared/Button';
 import { Header } from '@/components/shared/Header';
 import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
@@ -62,17 +64,6 @@ export default function PaymentScreen() {
       });
 
       setState('success');
-
-      setTimeout(() => {
-        router.replace({
-          pathname: '/(tabs)/balances/payment/confirmation',
-          params: {
-            success: 'true',
-            amount: params.amount,
-            toUserName: params.toUserName,
-          },
-        });
-      }, 1000);
     } catch (err) {
       setState('failed');
       setError(
@@ -86,22 +77,31 @@ export default function PaymentScreen() {
   const renderStatus = () => {
     if (state === 'processing') {
       return (
-        <View style={styles.statusCenter}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.statusTitle}>Processing Payment</Text>
-          <Text style={styles.statusMessage}>
-            Securely processing your payment of ${amount.toFixed(2)}...
-          </Text>
-        </View>
+        <PaymentProgressModal
+          visible
+          message={`Securely processing your payment of $${amount.toFixed(2)}...`}
+        />
       );
     }
 
     if (state === 'success') {
       return (
         <View style={styles.statusCenter}>
-          <View style={styles.successCircle}>
-            <Ionicons name="checkmark" size={36} color={colors.textInverse} />
-          </View>
+          <AnimatedCheckmark
+            size={88}
+            onDone={() => {
+              setTimeout(() => {
+                router.replace({
+                  pathname: '/(tabs)/balances/payment/confirmation',
+                  params: {
+                    success: 'true',
+                    amount: params.amount,
+                    toUserName: params.toUserName,
+                  },
+                });
+              }, 1000);
+            }}
+          />
           <Text style={styles.statusTitle}>Payment Successful!</Text>
           <Text style={styles.statusMessage}>
             You paid {params.toUserName} ${amount.toFixed(2)}
