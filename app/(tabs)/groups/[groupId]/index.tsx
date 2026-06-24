@@ -17,6 +17,8 @@ import { MemberChip } from '@/components/groups/MemberChip';
 import { ExpenseCard } from '@/components/expenses/ExpenseCard';
 import { Card } from '@/components/shared/Card';
 import { Badge } from '@/components/shared/Badge';
+import { ExpenseChart } from '@/components/charts/ExpenseChart';
+import { BalanceChart } from '@/components/charts/BalanceChart';
 import { Header } from '@/components/shared/Header';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
@@ -230,6 +232,14 @@ export default function GroupDetailScreen() {
                 );
               })}
           </View>
+        )}
+
+        {expenses.length > 0 && (
+          <ExpenseChart expenses={expenses} />
+        )}
+
+        {balances.length > 1 && (
+          <BalanceChart balances={balances} currentUserId={user?.id ?? ''} />
         )}
 
         <Text style={styles.sectionTitle}>Members</Text>
