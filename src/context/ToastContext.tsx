@@ -19,13 +19,12 @@ interface ToastContextValue {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
-let toastId = 0;
-
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const toastIdRef = useRef(0);
 
   const showToast = useCallback((message: string, type: ToastType = 'info') => {
-    const id = ++toastId;
+    const id = ++toastIdRef.current;
     setToasts((prev) => [...prev, { id, message, type }]);
 
     setTimeout(() => {

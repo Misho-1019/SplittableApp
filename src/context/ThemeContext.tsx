@@ -25,16 +25,18 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         setIsDark(value === 'true');
       }
       setLoaded(true);
+    }).catch(() => {
+      setLoaded(true);
     });
   }, []);
 
   const toggleDarkMode = useCallback(() => {
-    setIsDark((prev) => {
-      const next = !prev;
-      AsyncStorage.setItem(STORAGE_KEY, String(next));
-      return next;
-    });
+    setIsDark((prev) => !prev);
   }, []);
+
+  useEffect(() => {
+    AsyncStorage.setItem(STORAGE_KEY, String(isDark));
+  }, [isDark]);
 
   const theme = loaded ? (isDark ? darkColors : colors) : colors;
 

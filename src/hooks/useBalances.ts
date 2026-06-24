@@ -1,15 +1,18 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import { calculateGroupBalances } from '@/utils/calculateBalances';
-import { getGroup } from '@/services/groups.service';
-import { getUsers } from '@/services/users.service';
 import type { Balance, Expense, Group } from '@/types';
 
 export function useBalances(userGroups: Group[] | undefined) {
   const [balances, setBalances] = useState<Balance[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+
+  const groupIdsKey = useMemo(
+    () => (userGroups ?? []).map((g) => g.id).join(','),
+    [userGroups],
+  );
 
   const refresh = useCallback(async () => {
     if (!userGroups || userGroups.length === 0) {
@@ -57,7 +60,7 @@ export function useBalances(userGroups: Group[] | undefined) {
     } finally {
       setLoading(false);
     }
-  }, [userGroups]);
+  }, [groupIdsKey]);
 
   useEffect(() => {
     refresh();

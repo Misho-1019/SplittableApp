@@ -6,6 +6,8 @@ import {
   setDoc,
   updateDoc,
   deleteDoc,
+  deleteField,
+  writeBatch,
   query,
   where,
   orderBy,
@@ -105,23 +107,27 @@ export async function getGroup(groupId: string): Promise<Group | null> {
 }
 
 export async function deleteGroup(groupId: string): Promise<void> {
-  // Delete all expenses in the group subcollection
+  const batch = writeBatch(db);
+
   const expensesSnap = await getDocs(
     collection(db, 'groups', groupId, 'expenses'),
   );
   for (const expDoc of expensesSnap.docs) {
-    await deleteDoc(doc(db, 'groups', groupId, 'expenses', expDoc.id));
+    batch.delete(doc(db, 'groups', groupId, 'expenses', expDoc.id));
   }
 
-  // Delete all settlements in the group subcollection
   const settlementsSnap = await getDocs(
     collection(db, 'groups', groupId, 'settlements'),
   );
   for (const setDoc of settlementsSnap.docs) {
-    await deleteDoc(doc(db, 'groups', groupId, 'settlements', setDoc.id));
+    batch.delete(doc(db, 'groups', groupId, 'settlements', setDoc.id));
   }
 
-  // Best-effort: delete receipt files from Storage
+  batch.delete(doc(db, 'groups', groupId));
+
+  await batch.commit();
+
+  // Best-effort: delete receipt files from Storage (cannot be batched)
   try {
     const receiptRef = ref(storage, `receipts/${groupId}`);
     const listResult = await listAll(receiptRef);
@@ -129,10 +135,8 @@ export async function deleteGroup(groupId: string): Promise<void> {
       await deleteObject(item);
     }
   } catch {
-    // Storage cleanup is non-critical; continue with doc deletion
+    // Storage cleanup is non-critical
   }
-
-  await deleteDoc(doc(db, 'groups', groupId));
 }
 
 export async function updateGroup(
@@ -164,18 +168,10 @@ export async function removeMemberFromGroup(
   userId: string,
 ): Promise<void> {
   const groupRef = doc(db, 'groups', groupId);
-  const snap = await getDoc(groupRef);
-
-  if (!snap.exists()) return;
-
-  const data = snap.data();
-  const members: string[] = data.members.filter((m: string) => m !== userId);
-  const memberNames: Record<string, string> = { ...data.memberNames };
-  delete memberNames[userId];
 
   await updateDoc(groupRef, {
-    members,
-    memberNames,
+    members: arrayRemove(userId),
+    [`memberNames.${userId}`]: deleteField(),
     updatedAt: serverTimestamp(),
   });
 }

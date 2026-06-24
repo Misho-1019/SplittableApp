@@ -4,6 +4,7 @@ import {
   getDocs,
   query,
   where,
+  documentId,
   collection,
   limit,
 } from 'firebase/firestore';
@@ -32,9 +33,14 @@ export async function getUsers(userIds: string[]): Promise<User[]> {
   const uniqueIds = [...new Set(userIds)];
   const users: User[] = [];
 
-  for (const userId of uniqueIds) {
-    const user = await getUser(userId);
-    if (user) users.push(user);
+  // Firestore 'in' queries support up to 30 values; chunk if needed
+  for (let i = 0; i < uniqueIds.length; i += 30) {
+    const chunk = uniqueIds.slice(i, i + 30);
+    const q = query(collection(db, 'users'), where(documentId(), 'in', chunk));
+    const snapshot = await getDocs(q);
+    for (const doc of snapshot.docs) {
+      users.push(buildUserFromDoc(doc.id, doc.data()));
+    }
   }
 
   return users;

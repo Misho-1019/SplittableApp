@@ -5,9 +5,9 @@ import {
   setDoc,
   deleteDoc,
   updateDoc,
+  runTransaction,
   increment,
   query,
-  where,
   orderBy,
   onSnapshot,
   serverTimestamp,
@@ -103,14 +103,17 @@ export async function deleteExpense(
   groupId: string,
   expenseId: string,
 ): Promise<void> {
-  const expenseSnap = await getDoc(
-    doc(db, 'groups', groupId, 'expenses', expenseId),
-  );
-  if (expenseSnap.exists()) {
+  const expenseRef = doc(db, 'groups', groupId, 'expenses', expenseId);
+  const groupRef = doc(db, 'groups', groupId);
+
+  await runTransaction(db, async (transaction) => {
+    const expenseSnap = await transaction.get(expenseRef);
+    if (!expenseSnap.exists()) return;
+
     const amount = expenseSnap.data().amount as number;
-    await deleteDoc(doc(db, 'groups', groupId, 'expenses', expenseId));
-    await updateDoc(doc(db, 'groups', groupId), {
+    transaction.delete(expenseRef);
+    transaction.update(groupRef, {
       totalExpenses: increment(-amount),
     });
-  }
+  });
 }
