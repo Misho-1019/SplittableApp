@@ -1,5 +1,5 @@
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import { colors } from '@/config/theme';
+import { useTheme } from '@/context/ThemeContext';
 
 interface LoadingSpinnerProps {
   fullScreen?: boolean;
@@ -10,19 +10,22 @@ interface LoadingSpinnerProps {
 export function LoadingSpinner({
   fullScreen = false,
   size = 'large',
-  color = colors.primary,
+  color,
 }: LoadingSpinnerProps) {
+  const { colors } = useTheme();
+  const indicatorColor = color ?? colors.primary;
+
   if (fullScreen) {
     return (
-      <View style={styles.fullScreen}>
-        <ActivityIndicator size={size} color={color} />
+      <View style={[styles.fullScreen, { backgroundColor: colors.overlay }]}>
+        <ActivityIndicator size={size} color={indicatorColor} />
       </View>
     );
   }
 
   return (
     <View style={styles.inline}>
-      <ActivityIndicator size={size} color={color} />
+      <ActivityIndicator size={size} color={indicatorColor} />
     </View>
   );
 }
@@ -30,7 +33,6 @@ export function LoadingSpinner({
 const styles = StyleSheet.create({
   fullScreen: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: colors.overlay,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 999,

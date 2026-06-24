@@ -1,6 +1,7 @@
 import { Modal, View, Text, StyleSheet, Pressable } from 'react-native';
 import { Button } from './Button';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
 
 interface ConfirmModalProps {
   visible: boolean;
@@ -25,6 +26,8 @@ export function ConfirmModal({
   onCancel,
   loading = false,
 }: ConfirmModalProps) {
+  const { colors } = useTheme();
+
   return (
     <Modal
       visible={visible}
@@ -32,10 +35,10 @@ export function ConfirmModal({
       animationType="fade"
       onRequestClose={onCancel}
     >
-      <Pressable style={styles.overlay} onPress={onCancel}>
-        <Pressable style={styles.card} onPress={() => {}}>
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.message}>{message}</Text>
+      <Pressable style={[styles.overlay, { backgroundColor: colors.overlay }]} onPress={onCancel}>
+        <Pressable style={[styles.card, { backgroundColor: colors.surface }]} onPress={() => {}}>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
+          <Text style={[styles.message, { color: colors.textSecondary }]}>{message}</Text>
           <View style={styles.buttons}>
             <Button
               title={cancelLabel}
@@ -62,13 +65,11 @@ export function ConfirmModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: colors.overlay,
     alignItems: 'center',
     justifyContent: 'center',
     padding: spacing.lg,
   },
   card: {
-    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     width: '100%',
@@ -78,12 +79,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.bold,
-    color: colors.textPrimary,
     textAlign: 'center',
   },
   message: {
     fontSize: fontSize.md,
-    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
   },

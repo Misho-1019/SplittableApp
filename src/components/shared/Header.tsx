@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, fontSize, fontWeight, spacing } from '@/config/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { fontSize, fontWeight, spacing } from '@/config/theme';
 
 interface HeaderProps {
   title: string;
@@ -12,8 +13,18 @@ interface HeaderProps {
 }
 
 export function Header({ title, onBack, rightAction }: HeaderProps) {
+  const { colors } = useTheme();
+
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.surface,
+          borderBottomColor: colors.border,
+        },
+      ]}
+    >
       <View style={styles.left}>
         {onBack && (
           <TouchableOpacity onPress={onBack} style={styles.backButton} hitSlop={8}>
@@ -21,7 +32,7 @@ export function Header({ title, onBack, rightAction }: HeaderProps) {
           </TouchableOpacity>
         )}
       </View>
-      <Text style={styles.title} numberOfLines={1}>
+      <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
         {title}
       </Text>
       <View style={styles.right}>
@@ -42,9 +53,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm + 4,
-    backgroundColor: colors.surface,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
     minHeight: 52,
   },
   left: {
@@ -59,7 +68,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
-    color: colors.textPrimary,
     textAlign: 'center',
   },
   backButton: {

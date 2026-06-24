@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { View, Text, Animated, ActivityIndicator, StyleSheet } from 'react-native';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
 
 interface PaymentProgressModalProps {
   visible: boolean;
@@ -11,6 +12,7 @@ export function PaymentProgressModal({
   visible,
   message = 'Processing your payment...',
 }: PaymentProgressModalProps) {
+  const { colors } = useTheme();
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -28,10 +30,10 @@ export function PaymentProgressModal({
   if (!visible) return null;
 
   return (
-    <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
-      <View style={styles.card}>
+    <Animated.View style={[styles.overlay, { opacity: fadeAnim, backgroundColor: colors.overlay }]}>
+      <View style={[styles.card, { backgroundColor: colors.surface }]}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.message}>{message}</Text>
+        <Text style={[styles.message, { color: colors.textSecondary }]}>{message}</Text>
       </View>
     </Animated.View>
   );
@@ -40,13 +42,11 @@ export function PaymentProgressModal({
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: colors.overlay,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 100,
   },
   card: {
-    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     padding: spacing.xl,
     alignItems: 'center',
@@ -56,7 +56,6 @@ const styles = StyleSheet.create({
   message: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.medium,
-    color: colors.textSecondary,
     textAlign: 'center',
   },
 });

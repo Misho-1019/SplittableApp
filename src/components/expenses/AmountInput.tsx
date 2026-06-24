@@ -1,5 +1,6 @@
 import { View, Text, TextInput, StyleSheet } from 'react-native';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
 
 interface AmountInputProps {
   value: string;
@@ -16,14 +17,16 @@ export function AmountInput({
   error,
   placeholder = '0.00',
 }: AmountInputProps) {
+  const { colors } = useTheme();
+
   return (
     <View style={styles.wrapper}>
-      <View style={[styles.container, error && styles.containerError]}>
-        <View style={styles.currencyBadge}>
-          <Text style={styles.currencyText}>{currency}</Text>
+      <View style={[styles.container, { borderColor: colors.border, backgroundColor: colors.surface }, error && { borderColor: colors.danger }]}>
+        <View style={[styles.currencyBadge, { backgroundColor: colors.primary }]}>
+          <Text style={[styles.currencyText, { color: colors.textInverse }]}>{currency}</Text>
         </View>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { color: colors.textPrimary }]}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
@@ -32,7 +35,7 @@ export function AmountInput({
           returnKeyType="done"
         />
       </View>
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error && <Text style={[styles.error, { color: colors.danger }]}>{error}</Text>}
     </View>
   );
 }
@@ -45,16 +48,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: colors.border,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.surface,
     overflow: 'hidden',
   },
-  containerError: {
-    borderColor: colors.danger,
-  },
   currencyBadge: {
-    backgroundColor: colors.primary,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm + 6,
     alignSelf: 'stretch',
@@ -63,18 +60,15 @@ const styles = StyleSheet.create({
   currencyText: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.bold,
-    color: colors.textInverse,
   },
   input: {
     flex: 1,
     fontSize: fontSize.xxl,
     fontWeight: fontWeight.semibold,
-    color: colors.textPrimary,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm + 4,
   },
   error: {
     fontSize: fontSize.xs,
-    color: colors.danger,
   },
 });

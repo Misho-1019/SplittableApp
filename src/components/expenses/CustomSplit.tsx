@@ -1,7 +1,8 @@
 import { View, Text, TextInput, StyleSheet } from 'react-native';
 import { Card } from '@/components/shared/Card';
 import { Avatar } from '@/components/shared/Avatar';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
 
 interface CustomSplitProps {
   members: { id: string; displayName: string; share: string }[];
@@ -14,6 +15,7 @@ export function CustomSplit({
   onShareChange,
   totalAmount,
 }: CustomSplitProps) {
+  const { colors } = useTheme();
   const sharesTotal = members.reduce(
     (sum, m) => sum + (parseFloat(m.share) || 0),
     0,
@@ -26,13 +28,13 @@ export function CustomSplit({
       {members.map((member) => (
         <View key={member.id} style={styles.row}>
           <Avatar name={member.displayName} size="sm" />
-          <Text style={styles.name} numberOfLines={1}>
+          <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
             {member.displayName}
           </Text>
-          <View style={styles.inputWrapper}>
-            <Text style={styles.currency}>$</Text>
+          <View style={[styles.inputWrapper, { borderColor: colors.border, backgroundColor: colors.surface }]}>
+            <Text style={[styles.currency, { color: colors.textMuted }]}>$</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { color: colors.textPrimary }]}
               value={member.share}
               onChangeText={(text) => onShareChange(member.id, text)}
               placeholder="0.00"
@@ -43,15 +45,15 @@ export function CustomSplit({
         </View>
       ))}
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, { borderTopColor: colors.divider }]}>
         <Text
           style={[
             styles.remaining,
             isBalanced
-              ? styles.remainingBalanced
+              ? { color: colors.success }
               : remaining < 0
-                ? styles.remainingNegative
-                : styles.remainingPositive,
+                ? { color: colors.danger }
+                : { color: colors.warning },
           ]}
         >
           {isBalanced
@@ -75,34 +77,28 @@ const styles = StyleSheet.create({
   name: {
     flex: 1,
     fontSize: fontSize.sm,
-    color: colors.textPrimary,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: borderRadius.sm,
-    backgroundColor: colors.surface,
     overflow: 'hidden',
     width: 100,
   },
   currency: {
     paddingLeft: spacing.sm,
     fontSize: fontSize.sm,
-    color: colors.textMuted,
   },
   input: {
     flex: 1,
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
-    color: colors.textPrimary,
     paddingVertical: spacing.xs + 2,
     paddingRight: spacing.sm,
   },
   footer: {
     borderTopWidth: 1,
-    borderTopColor: colors.divider,
     paddingTop: spacing.sm,
     marginTop: spacing.sm,
     alignItems: 'center',
@@ -110,14 +106,5 @@ const styles = StyleSheet.create({
   remaining: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.semibold,
-  },
-  remainingBalanced: {
-    color: colors.success,
-  },
-  remainingPositive: {
-    color: colors.warning,
-  },
-  remainingNegative: {
-    color: colors.danger,
   },
 });

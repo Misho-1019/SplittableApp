@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { View, Text, TextInput, StyleSheet } from 'react-native';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
 
 interface CardInputProps {
   cardNumber: string;
@@ -19,6 +20,7 @@ export function CardInput({
   cvc,
   onCvcChange,
 }: CardInputProps) {
+  const { colors } = useTheme();
   const formatCardNumber = useCallback((text: string) => {
     const digits = text.replace(/\D/g, '').slice(0, 16);
     return digits.replace(/(\d{4})(?=\d)/g, '$1 ');
@@ -39,9 +41,9 @@ export function CardInput({
   return (
     <View style={styles.container}>
       <View style={styles.field}>
-        <Text style={styles.label}>Card Number</Text>
+        <Text style={[styles.label, { color: colors.textSecondary }]}>Card Number</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { borderColor: colors.border, color: colors.textPrimary, backgroundColor: colors.surface }]}
           value={cardNumber}
           onChangeText={(t) => onCardNumberChange(formatCardNumber(t))}
           placeholder="4242 4242 4242 4242"
@@ -53,9 +55,9 @@ export function CardInput({
 
       <View style={styles.row}>
         <View style={[styles.field, styles.halfField]}>
-          <Text style={styles.label}>Expiry</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>Expiry</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { borderColor: colors.border, color: colors.textPrimary, backgroundColor: colors.surface }]}
             value={expiry}
             onChangeText={(t) => onExpiryChange(formatExpiry(t))}
             placeholder="MM/YY"
@@ -66,9 +68,9 @@ export function CardInput({
         </View>
 
         <View style={[styles.field, styles.halfField]}>
-          <Text style={styles.label}>CVC</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>CVC</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { borderColor: colors.border, color: colors.textPrimary, backgroundColor: colors.surface }]}
             value={cvc}
             onChangeText={(t) => onCvcChange(formatCvc(t))}
             placeholder="123"
@@ -80,7 +82,7 @@ export function CardInput({
         </View>
       </View>
 
-      <Text style={styles.hint}>
+      <Text style={[styles.hint, { color: colors.textMuted }]}>
         Test cards: 4242 4242 4242 4242 (success) · 4000 0000 0000 0002 (decline)
       </Text>
     </View>
@@ -97,17 +99,13 @@ const styles = StyleSheet.create({
   label: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
-    color: colors.textSecondary,
   },
   input: {
     borderWidth: 1.5,
-    borderColor: colors.border,
     borderRadius: borderRadius.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm + 4,
     fontSize: fontSize.md,
-    color: colors.textPrimary,
-    backgroundColor: colors.surface,
   },
   row: {
     flexDirection: 'row',
@@ -118,7 +116,6 @@ const styles = StyleSheet.create({
   },
   hint: {
     fontSize: fontSize.xs,
-    color: colors.textMuted,
     textAlign: 'center',
   },
 });

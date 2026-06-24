@@ -1,20 +1,24 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, fontSize, fontWeight, spacing, borderRadius, shadow } from '@/config/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { fontSize, fontWeight, spacing, borderRadius, shadow } from '@/config/theme';
 import type { Group } from '@/types';
 
 interface GroupCardProps {
   group: Group;
   onPress: () => void;
+  onLongPress?: () => void;
 }
 
-export function GroupCard({ group, onPress }: GroupCardProps) {
+export function GroupCard({ group, onPress, onLongPress }: GroupCardProps) {
+  const { colors } = useTheme();
   const memberCount = group.members.length;
 
   return (
     <TouchableOpacity
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.border }]}
       onPress={onPress}
+      onLongPress={onLongPress}
       activeOpacity={0.7}
     >
       <View style={styles.iconContainer}>
@@ -22,19 +26,19 @@ export function GroupCard({ group, onPress }: GroupCardProps) {
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.name} numberOfLines={1}>
+        <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
           {group.name}
         </Text>
         <View style={styles.meta}>
           <View style={styles.metaItem}>
             <Ionicons name="person" size={12} color={colors.textMuted} />
-            <Text style={styles.metaText}>
+            <Text style={[styles.metaText, { color: colors.textMuted }]}>
               {memberCount} member{memberCount !== 1 ? 's' : ''}
             </Text>
           </View>
           <View style={styles.metaItem}>
             <Ionicons name="cash" size={12} color={colors.textMuted} />
-            <Text style={styles.metaText}>
+            <Text style={[styles.metaText, { color: colors.textMuted }]}>
               ${group.totalExpenses.toFixed(2)}
             </Text>
           </View>
@@ -50,12 +54,10 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     padding: spacing.md,
     gap: spacing.md,
     borderWidth: 1,
-    borderColor: colors.border,
     ...shadow.sm,
   },
   iconContainer: {
@@ -73,7 +75,6 @@ const styles = StyleSheet.create({
   name: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.semibold,
-    color: colors.textPrimary,
   },
   meta: {
     flexDirection: 'row',
@@ -86,6 +87,5 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: fontSize.xs,
-    color: colors.textMuted,
   },
 });

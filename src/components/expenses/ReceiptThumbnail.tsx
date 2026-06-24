@@ -1,6 +1,7 @@
 import { View, Image, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, fontSize, spacing, borderRadius } from '@/config/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { fontSize, spacing, borderRadius } from '@/config/theme';
 
 interface ReceiptThumbnailProps {
   uri: string;
@@ -9,6 +10,8 @@ interface ReceiptThumbnailProps {
 }
 
 export function ReceiptThumbnail({ uri, onPress, onRemove }: ReceiptThumbnailProps) {
+  const { colors } = useTheme();
+
   return (
     <View style={styles.container}>
       <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
@@ -16,14 +19,14 @@ export function ReceiptThumbnail({ uri, onPress, onRemove }: ReceiptThumbnailPro
       </TouchableOpacity>
 
       {onRemove && (
-        <TouchableOpacity style={styles.removeButton} onPress={onRemove}>
+        <TouchableOpacity style={[styles.removeButton, { backgroundColor: colors.surface }]} onPress={onRemove}>
           <Ionicons name="close-circle" size={22} color={colors.danger} />
         </TouchableOpacity>
       )}
 
       <View style={styles.label}>
         <Ionicons name="camera" size={12} color={colors.textInverse} />
-        <Text style={styles.labelText}>Receipt</Text>
+        <Text style={[styles.labelText, { color: colors.textInverse }]}>Receipt</Text>
       </View>
     </View>
   );
@@ -44,7 +47,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: spacing.xs,
     right: spacing.xs,
-    backgroundColor: colors.surface,
     borderRadius: 12,
   },
   label: {
@@ -61,7 +63,6 @@ const styles = StyleSheet.create({
   },
   labelText: {
     fontSize: fontSize.xs,
-    color: colors.textInverse,
     fontWeight: '500',
   },
 });

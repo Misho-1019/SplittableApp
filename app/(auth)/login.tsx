@@ -5,9 +5,10 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/hooks/useAuth';
+import { useTheme } from '@/context/ThemeContext';
 import { Button } from '@/components/shared/Button';
 import { Input } from '@/components/shared/Input';
-import { colors, fontSize, spacing } from '@/config/theme';
+import { fontSize, spacing } from '@/config/theme';
 import { getFirebaseErrorMessage } from '@/utils/errors';
 
 const loginSchema = z.object({
@@ -20,6 +21,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 export default function LoginScreen() {
   const router = useRouter();
   const { login } = useAuth();
+  const { colors } = useTheme();
   const [serverError, setServerError] = useState('');
 
   const {
@@ -42,7 +44,7 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView
@@ -50,8 +52,10 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
-          <Text style={styles.appName}>Splittable</Text>
-          <Text style={styles.tagline}>Split expenses, not friendships</Text>
+          <Text style={[styles.appName, { color: colors.primary }]}>Splittable</Text>
+          <Text style={[styles.tagline, { color: colors.textSecondary }]}>
+            Split expenses, not friendships
+          </Text>
         </View>
 
         <View style={styles.form}>
@@ -86,7 +90,11 @@ export default function LoginScreen() {
             )}
           />
 
-          {serverError ? <Text style={styles.error}>{serverError}</Text> : null}
+          {serverError ? (
+            <Text style={[styles.error, { color: colors.danger }]}>
+              {serverError}
+            </Text>
+          ) : null}
 
           <Button
             title="Login"
@@ -96,9 +104,11 @@ export default function LoginScreen() {
           />
 
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Don't have an account? </Text>
+            <Text style={[styles.footerText, { color: colors.textSecondary }]}>
+              Don't have an account?{' '}
+            </Text>
             <Text
-              style={styles.link}
+              style={[styles.link, { color: colors.primary }]}
               onPress={() => router.push('/(auth)/register')}
             >
               Register
@@ -113,7 +123,6 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   scroll: {
     flexGrow: 1,
@@ -127,18 +136,15 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: fontSize.xxxl,
     fontWeight: '700',
-    color: colors.primary,
     marginBottom: spacing.xs,
   },
   tagline: {
     fontSize: fontSize.md,
-    color: colors.textSecondary,
   },
   form: {
     gap: spacing.md,
   },
   error: {
-    color: colors.danger,
     fontSize: fontSize.sm,
     textAlign: 'center',
     backgroundColor: '#FFEBEE',
@@ -153,11 +159,9 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
   },
   link: {
     fontSize: fontSize.sm,
-    color: colors.primary,
     fontWeight: '600',
   },
 });

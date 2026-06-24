@@ -2,7 +2,8 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Badge } from '@/components/shared/Badge';
 import { Card } from '@/components/shared/Card';
-import { colors, fontSize, fontWeight, spacing } from '@/config/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { fontSize, fontWeight, spacing } from '@/config/theme';
 import { formatRelativeDate } from '@/utils/dates';
 import type { Expense, SplitType } from '@/types';
 
@@ -18,26 +19,28 @@ const splitTypeLabels: Record<SplitType, string> = {
 };
 
 export function ExpenseCard({ expense, onPress }: ExpenseCardProps) {
+  const { colors } = useTheme();
+
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
       <Card>
         <View style={styles.header}>
-          <Text style={styles.description} numberOfLines={1}>
+          <Text style={[styles.description, { color: colors.textPrimary }]} numberOfLines={1}>
             {expense.description}
           </Text>
-          <Text style={styles.amount}>${expense.amount.toFixed(2)}</Text>
+          <Text style={[styles.amount, { color: colors.textPrimary }]}>${expense.amount.toFixed(2)}</Text>
         </View>
 
         <View style={styles.meta}>
           <View style={styles.metaItem}>
             <Ionicons name="person" size={12} color={colors.textMuted} />
-            <Text style={styles.metaText}>
+            <Text style={[styles.metaText, { color: colors.textMuted }]}>
               {expense.paidByName} paid
             </Text>
           </View>
           <View style={styles.metaItem}>
             <Ionicons name="time-outline" size={12} color={colors.textMuted} />
-            <Text style={styles.metaText}>
+            <Text style={[styles.metaText, { color: colors.textMuted }]}>
               {formatRelativeDate(expense.createdAt)}
             </Text>
           </View>
@@ -46,9 +49,9 @@ export function ExpenseCard({ expense, onPress }: ExpenseCardProps) {
           )}
         </View>
 
-        <View style={styles.footer}>
+        <View style={[styles.footer, { borderTopColor: colors.divider }]}>
           <Badge variant="info" label={splitTypeLabels[expense.splitType]} />
-          <Text style={styles.splitPreview} numberOfLines={1}>
+          <Text style={[styles.splitPreview, { color: colors.textMuted }]} numberOfLines={1}>
             {expense.splitDetails.map((s) => s.displayName.split(' ')[0]).join(', ')}
           </Text>
         </View>
@@ -68,13 +71,11 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: fontSize.md,
     fontWeight: fontWeight.semibold,
-    color: colors.textPrimary,
     marginRight: spacing.sm,
   },
   amount: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.bold,
-    color: colors.textPrimary,
   },
   meta: {
     flexDirection: 'row',
@@ -88,7 +89,6 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: fontSize.xs,
-    color: colors.textMuted,
   },
   footer: {
     flexDirection: 'row',
@@ -96,11 +96,9 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingTop: spacing.xs,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.divider,
   },
   splitPreview: {
     fontSize: fontSize.xs,
-    color: colors.textMuted,
     flex: 1,
   },
 });

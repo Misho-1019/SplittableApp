@@ -7,7 +7,8 @@ import { z } from 'zod';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/shared/Button';
 import { Input } from '@/components/shared/Input';
-import { colors, fontSize, spacing } from '@/config/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { fontSize, spacing } from '@/config/theme';
 import { getFirebaseErrorMessage } from '@/utils/errors';
 
 const registerSchema = z
@@ -27,6 +28,7 @@ type RegisterForm = z.infer<typeof registerSchema>;
 export default function RegisterScreen() {
   const router = useRouter();
   const { register } = useAuth();
+  const { colors } = useTheme();
   const [serverError, setServerError] = useState('');
 
   const {
@@ -49,7 +51,7 @@ export default function RegisterScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView
@@ -57,8 +59,8 @@ export default function RegisterScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join Splittable and start splitting expenses</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>Create Account</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Join Splittable and start splitting expenses</Text>
         </View>
 
         <View style={styles.form}>
@@ -123,7 +125,7 @@ export default function RegisterScreen() {
             )}
           />
 
-          {serverError ? <Text style={styles.error}>{serverError}</Text> : null}
+          {serverError ? <Text style={[styles.error, { color: colors.danger, backgroundColor: '#FFEBEE' }]}>{serverError}</Text> : null}
 
           <Button
             title="Create Account"
@@ -133,9 +135,9 @@ export default function RegisterScreen() {
           />
 
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Already have an account? </Text>
+            <Text style={[styles.footerText, { color: colors.textSecondary }]}>Already have an account? </Text>
             <Text
-              style={styles.link}
+              style={[styles.link, { color: colors.primary }]}
               onPress={() => router.back()}
             >
               Login
@@ -150,7 +152,6 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   scroll: {
     flexGrow: 1,
@@ -164,22 +165,18 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.xxl,
     fontWeight: '700',
-    color: colors.textPrimary,
     marginBottom: spacing.xs,
   },
   subtitle: {
     fontSize: fontSize.md,
-    color: colors.textSecondary,
     textAlign: 'center',
   },
   form: {
     gap: spacing.md,
   },
   error: {
-    color: colors.danger,
     fontSize: fontSize.sm,
     textAlign: 'center',
-    backgroundColor: '#FFEBEE',
     padding: spacing.sm,
     borderRadius: 8,
     overflow: 'hidden',
@@ -191,11 +188,9 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
   },
   link: {
     fontSize: fontSize.sm,
-    color: colors.primary,
     fontWeight: '600',
   },
 });

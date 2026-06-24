@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, fontSize, fontWeight, borderRadius, spacing } from '@/config/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { fontSize, fontWeight, borderRadius, spacing } from '@/config/theme';
 
 type BadgeVariant = 'paid' | 'pending' | 'processing' | 'completed' | 'failed' | 'info';
 
@@ -8,16 +9,18 @@ interface BadgeProps {
   variant?: BadgeVariant;
 }
 
-const variantStyles: Record<BadgeVariant, { bg: string; text: string }> = {
-  paid: { bg: '#E8F5E9', text: colors.success },
-  pending: { bg: '#FFF3E0', text: colors.warning },
-  processing: { bg: '#E3F2FD', text: colors.info },
-  completed: { bg: '#E8F5E9', text: colors.success },
-  failed: { bg: '#FFEBEE', text: colors.danger },
-  info: { bg: '#F3E5F5', text: '#9C27B0' },
-};
-
 export function Badge({ label, variant = 'info' }: BadgeProps) {
+  const { colors } = useTheme();
+
+  const variantStyles: Record<BadgeVariant, { bg: string; text: string }> = {
+    paid: { bg: '#E8F5E9', text: colors.success },
+    pending: { bg: '#FFF3E0', text: colors.warning },
+    processing: { bg: '#E3F2FD', text: colors.info },
+    completed: { bg: '#E8F5E9', text: colors.success },
+    failed: { bg: '#FFEBEE', text: colors.danger },
+    info: { bg: '#F3E5F5', text: '#9C27B0' },
+  };
+
   const style = variantStyles[variant];
 
   return (

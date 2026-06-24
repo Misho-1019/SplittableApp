@@ -1,65 +1,69 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Avatar } from '@/components/shared/Avatar';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
+import type { BalanceDirection } from '@/utils/calculateBalances';
 
 interface BalanceRowProps {
   displayName: string;
   groupName: string;
-  netBalance: number;
+  amount: number;
+  direction: BalanceDirection;
   onPress: () => void;
 }
 
 export function BalanceRow({
   displayName,
   groupName,
-  netBalance,
+  amount,
+  direction,
   onPress,
 }: BalanceRowProps) {
-  const isOwedToYou = netBalance > 0;
-  const absAmount = Math.abs(netBalance);
+  const { colors } = useTheme();
+  const isReceive = direction === 'receive';
 
   return (
     <TouchableOpacity
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.border }]}
       onPress={onPress}
       activeOpacity={0.7}
     >
       <Avatar name={displayName} size="md" />
       <View style={styles.info}>
-        <Text style={styles.name} numberOfLines={1}>
+        <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
           {displayName}
         </Text>
-        <Text style={styles.group} numberOfLines={1}>
+        <Text style={[styles.group, { color: colors.textMuted }]} numberOfLines={1}>
           {groupName}
         </Text>
       </View>
       <Text
         style={[
           styles.amount,
-          isOwedToYou ? styles.positive : styles.negative,
+          { color: isReceive ? colors.success : colors.danger },
         ]}
       >
-        {isOwedToYou ? '+' : '-'}${absAmount.toFixed(2)}
+        {isReceive ? '+' : '-'}${amount.toFixed(2)}
       </Text>
       <View
         style={[
           styles.actionButton,
-          isOwedToYou ? styles.actionPositive : styles.actionNegative,
+          { backgroundColor: isReceive ? '#E8F5E9' : '#FFEBEE' },
         ]}
       >
         <Text
           style={[
             styles.actionText,
-            isOwedToYou ? styles.actionTextPositive : styles.actionTextNegative,
+            { color: isReceive ? colors.success : colors.danger },
           ]}
         >
-          {isOwedToYou ? 'Settle' : 'Pay'}
+          {isReceive ? 'Settle' : 'Pay'}
         </Text>
         <Ionicons
           name="chevron-forward"
           size={12}
-          color={isOwedToYou ? colors.success : colors.danger}
+          color={isReceive ? colors.success : colors.danger}
         />
       </View>
     </TouchableOpacity>
@@ -70,12 +74,10 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
     padding: spacing.md,
     borderRadius: borderRadius.lg,
     gap: spacing.sm,
     borderWidth: 1,
-    borderColor: colors.border,
   },
   info: {
     flex: 1,
@@ -84,22 +86,14 @@ const styles = StyleSheet.create({
   name: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.semibold,
-    color: colors.textPrimary,
   },
   group: {
     fontSize: fontSize.xs,
-    color: colors.textMuted,
   },
   amount: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.bold,
     marginRight: spacing.sm,
-  },
-  positive: {
-    color: colors.success,
-  },
-  negative: {
-    color: colors.danger,
   },
   actionButton: {
     flexDirection: 'row',
@@ -109,20 +103,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.sm,
   },
-  actionPositive: {
-    backgroundColor: '#E8F5E9',
-  },
-  actionNegative: {
-    backgroundColor: '#FFEBEE',
-  },
   actionText: {
     fontSize: fontSize.xs,
     fontWeight: fontWeight.semibold,
-  },
-  actionTextPositive: {
-    color: colors.success,
-  },
-  actionTextNegative: {
-    color: colors.danger,
   },
 });

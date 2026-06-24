@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { Avatar } from '@/components/shared/Avatar';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
 
 interface MemberChipProps {
   name: string;
@@ -9,10 +10,12 @@ interface MemberChipProps {
 }
 
 export function MemberChip({ name, photoURL, isCurrentUser }: MemberChipProps) {
+  const { colors } = useTheme();
+
   return (
     <View style={styles.container}>
       <Avatar name={name} photoURL={photoURL} size="md" />
-      <Text style={styles.name} numberOfLines={1}>
+      <Text style={[styles.name, { color: colors.textSecondary }]} numberOfLines={1}>
         {name}
         {isCurrentUser ? ' (You)' : ''}
       </Text>
@@ -29,7 +32,6 @@ const styles = StyleSheet.create({
   name: {
     fontSize: fontSize.xs,
     fontWeight: fontWeight.medium,
-    color: colors.textSecondary,
     textAlign: 'center',
   },
 });

@@ -6,7 +6,8 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
-import { colors, fontSize, fontWeight, borderRadius, spacing } from '@/config/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { fontSize, fontWeight, borderRadius, spacing } from '@/config/theme';
 
 type ButtonVariant = 'primary' | 'secondary' | 'danger';
 
@@ -31,13 +32,21 @@ export function Button({
   textStyle,
   fullWidth = true,
 }: ButtonProps) {
+  const { colors } = useTheme();
   const isDisabled = disabled || loading;
+
+  const bgColors: Record<ButtonVariant, string> = {
+    primary: colors.primary,
+    secondary: 'transparent',
+    danger: colors.danger,
+  };
 
   return (
     <TouchableOpacity
       style={[
         styles.base,
-        styles[variant],
+        { backgroundColor: bgColors[variant] },
+        variant === 'secondary' && { borderWidth: 1.5, borderColor: colors.primary },
         fullWidth && styles.fullWidth,
         isDisabled && styles.disabled,
         style,
@@ -55,7 +64,7 @@ export function Button({
         <Text
           style={[
             styles.text,
-            variant === 'secondary' ? styles.textSecondary : styles.textLight,
+            { color: variant === 'secondary' ? colors.primary : colors.textInverse },
             isDisabled && styles.textDisabled,
             textStyle,
           ]}
@@ -78,17 +87,6 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     minHeight: 52,
   },
-  primary: {
-    backgroundColor: colors.primary,
-  },
-  secondary: {
-    backgroundColor: 'transparent',
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-  },
-  danger: {
-    backgroundColor: colors.danger,
-  },
   fullWidth: {
     alignSelf: 'stretch',
   },
@@ -98,12 +96,6 @@ const styles = StyleSheet.create({
   text: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.semibold,
-  },
-  textLight: {
-    color: colors.textInverse,
-  },
-  textSecondary: {
-    color: colors.primary,
   },
   textDisabled: {
     opacity: 0.7,

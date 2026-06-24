@@ -11,15 +11,28 @@ import { Header } from '@/components/shared/Header';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { Divider } from '@/components/shared/Divider';
-import { colors, spacing } from '@/config/theme';
+import {
+  getOwedToUser,
+  getUserOwes,
+  getOverallNetBalance,
+} from '@/utils/calculateBalances';
+import type { BalanceFromPerspective } from '@/utils/calculateBalances';
+import { useTheme } from '@/context/ThemeContext';
+import { spacing } from '@/config/theme';
 import type { Settlement } from '@/types';
 import { useState, useEffect, useCallback } from 'react';
+
+type ListItem =
+  | { type: 'divider'; key: string; label: string }
+  | (BalanceFromPerspective & { type: 'balance'; key: string })
+  | { type: 'settlement'; key: string; settlement: Settlement };
 
 export default function BalancesListScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { groups } = useGroups(user?.id);
   const { balances, loading, error, refresh } = useBalances(groups);
+  const { colors } = useTheme();
   const [settlements, setSettlements] = useState<Settlement[]>([]);
   const [loadingSettlements, setLoadingSettlements] = useState(true);
 
@@ -48,54 +61,63 @@ export default function BalancesListScreen() {
 
   if (!user) return null;
 
-  const netBalance = balances
-    .filter((b) => b.userId === user.id)
-    .reduce((sum, b) => sum + b.netBalance, 0);
+  const netBalance = getOverallNetBalance(balances, user.id);
+  const owedToYou = getOwedToUser(balances, user.id);
+  const youOwe = getUserOwes(balances, user.id);
 
-  const owedToYou = balances.filter(
-    (b) => b.netBalance < -0.01 && b.userId !== user.id,
-  );
-  const youOwe = balances.filter(
-    (b) => b.netBalance > 0.01 && b.userId !== user.id,
-  );
-
-  const handleSettleUp = (balance: typeof balances[0], direction: 'receive' | 'pay') => {
+  const handleSettleUp = (item: BalanceFromPerspective) => {
     router.push({
       pathname: '/(tabs)/balances/settle',
       params: {
-        groupId: balance.groupId,
-        groupName: balance.groupName,
-        toUserId: balance.userId,
-        toUserName: balance.displayName,
-        amount: Math.abs(balance.netBalance).toFixed(2),
-        currency: balance.currency,
-        direction,
+        groupId: item.groupId,
+        groupName: item.groupName,
+        toUserId: item.userId,
+        toUserName: item.displayName,
+        amount: item.amount.toFixed(2),
+        currency: item.currency,
+        direction: item.direction,
       },
     });
   };
 
-  const headerComponent = (
-    <View style={styles.headerSection}>
-      <BalanceSummaryCard netBalance={netBalance} currency="USD" />
-    </View>
-  );
+  const sectionHeader = (label: string) => <Divider label={label} />;
 
-  const sectionHeader = (label: string) => (
-    <Divider label={label} />
-  );
-
-  const data = [
-    ...(owedToYou.length > 0 ? [{ type: 'divider' as const, key: 'owed-divider', label: 'You are owed' }] : []),
-    ...owedToYou.map((b) => ({ type: 'balance' as const, key: b.userId + b.groupId, ...b, netBalance: Math.abs(b.netBalance), direction: 'receive' as const })),
-    ...(youOwe.length > 0 ? [{ type: 'divider' as const, key: 'owe-divider', label: 'You owe' }] : []),
-    ...youOwe.map((b) => ({ type: 'balance' as const, key: b.userId + b.groupId, ...b, netBalance: -Math.abs(b.netBalance), direction: 'pay' as const })),
-    ...(settlements.length > 0 ? [{ type: 'divider' as const, key: 'settlement-divider', label: 'Settlement History' }] : []),
-    ...settlements.map((s) => ({ type: 'settlement' as const, key: s.id, settlement: s })),
+  const data: ListItem[] = [
+    ...(owedToYou.length > 0
+      ? [{ type: 'divider' as const, key: 'owed-divider', label: 'You are owed' }]
+      : []),
+    ...owedToYou.map((b) => ({
+      type: 'balance' as const,
+      key: b.userId + b.groupId,
+      ...b,
+    })),
+    ...(youOwe.length > 0
+      ? [{ type: 'divider' as const, key: 'owe-divider', label: 'You owe' }]
+      : []),
+    ...youOwe.map((b) => ({
+      type: 'balance' as const,
+      key: b.userId + b.groupId,
+      ...b,
+    })),
+    ...(settlements.length > 0
+      ? [
+          {
+            type: 'divider' as const,
+            key: 'settlement-divider',
+            label: 'Settlement History',
+          },
+        ]
+      : []),
+    ...settlements.map((s) => ({
+      type: 'settlement' as const,
+      key: s.id,
+      settlement: s,
+    })),
   ];
 
   if (loading && balances.length === 0) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Header title="Balances" />
         <LoadingSpinner fullScreen />
       </View>
@@ -103,7 +125,7 @@ export default function BalancesListScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header title="Balances" />
 
       {data.length === 0 ? (
@@ -118,6 +140,11 @@ export default function BalancesListScreen() {
           keyExtractor={(item) => item.key}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            <View style={styles.headerSection}>
+              <BalanceSummaryCard netBalance={netBalance} currency="USD" />
+            </View>
+          }
           renderItem={({ item }) => {
             if (item.type === 'divider') {
               return sectionHeader(item.label);
@@ -134,8 +161,9 @@ export default function BalancesListScreen() {
               <BalanceRow
                 displayName={item.displayName}
                 groupName={item.groupName}
-                netBalance={item.netBalance}
-                onPress={() => handleSettleUp(item, item.direction)}
+                amount={item.amount}
+                direction={item.direction}
+                onPress={() => handleSettleUp(item)}
               />
             );
           }}
@@ -158,7 +186,6 @@ export default function BalancesListScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   headerSection: {
     padding: spacing.md,

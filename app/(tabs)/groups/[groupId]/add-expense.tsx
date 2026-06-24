@@ -11,6 +11,7 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/context/ToastContext';
 import { getGroup } from '@/services/groups.service';
 import { getUsers } from '@/services/users.service';
 import { createExpense } from '@/services/expenses.service';
@@ -27,13 +28,15 @@ import { EqualSplit } from '@/components/expenses/EqualSplit';
 import { PercentageSplit } from '@/components/expenses/PercentageSplit';
 import { CustomSplit } from '@/components/expenses/CustomSplit';
 import { ReceiptThumbnail } from '@/components/expenses/ReceiptThumbnail';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
 import type { Group, User, SplitType, SplitDetail } from '@/types';
 
 export default function AddExpenseScreen() {
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
   const router = useRouter();
   const { user } = useAuth();
+  const toast = useToast();
 
   const [group, setGroup] = useState<Group | null>(null);
   const [members, setMembers] = useState<User[]>([]);
@@ -47,6 +50,7 @@ export default function AddExpenseScreen() {
   const [customShares, setCustomShares] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const { colors } = useTheme();
 
   const {
     image: receiptUri,
@@ -174,7 +178,8 @@ export default function AddExpenseScreen() {
         }
       }
 
-      router.back();
+      toast.showToast('Expense saved successfully!', 'success');
+      setTimeout(() => router.back(), 400);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save expense.');
     } finally {
@@ -185,7 +190,7 @@ export default function AddExpenseScreen() {
   if (loadingData) return <LoadingSpinner fullScreen />;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header
         title="Add Expense"
         onBack={() => router.back()}
@@ -213,7 +218,7 @@ export default function AddExpenseScreen() {
             error={amount.trim() && (parseFloat(amount) || 0) <= 0 ? 'Enter a valid amount' : undefined}
           />
 
-          <Text style={styles.label}>Paid by</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>Paid by</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -223,16 +228,16 @@ export default function AddExpenseScreen() {
               <TouchableOpacity
                 key={member.id}
                 style={[
-                  styles.payerChip,
-                  paidBy === member.id && styles.payerChipActive,
+                  { alignItems: 'center', gap: spacing.xs, paddingVertical: spacing.sm, paddingHorizontal: spacing.sm + 4, borderRadius: borderRadius.lg, borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.surface, width: 80 },
+                  paidBy === member.id && { borderColor: colors.primary, backgroundColor: '#FFF0F0' },
                 ]}
                 onPress={() => setPaidBy(member.id)}
               >
                 <Avatar name={member.displayName} size="md" />
                 <Text
                   style={[
-                    styles.payerName,
-                    paidBy === member.id && styles.payerNameActive,
+                    { fontSize: fontSize.xs, fontWeight: fontWeight.medium, color: colors.textMuted, textAlign: 'center' },
+                    paidBy === member.id && { color: colors.primary },
                   ]}
                   numberOfLines={1}
                 >
@@ -243,7 +248,7 @@ export default function AddExpenseScreen() {
             ))}
           </ScrollView>
 
-          <Text style={styles.label}>Split Type</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>Split Type</Text>
           <SplitTypePicker value={splitType} onChange={setSplitType} />
 
           {splitType === 'equal' && (
@@ -279,7 +284,7 @@ export default function AddExpenseScreen() {
             />
           )}
 
-          <Text style={styles.label}>Receipt (optional)</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>Receipt (optional)</Text>
           {receiptUri ? (
             <ReceiptThumbnail
               uri={receiptUri}
@@ -287,25 +292,25 @@ export default function AddExpenseScreen() {
               onRemove={removeReceipt}
             />
           ) : (
-            <View style={styles.receiptButtons}>
+            <View style={{ flexDirection: 'row', gap: spacing.md }}>
               <TouchableOpacity
-                style={styles.receiptButton}
+                style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, borderWidth: 1.5, borderColor: colors.border, borderStyle: 'dashed', borderRadius: borderRadius.md, paddingVertical: spacing.md, backgroundColor: colors.surface }}
                 onPress={pickFromCamera}
               >
                 <Ionicons name="camera" size={20} color={colors.primary} />
-                <Text style={styles.receiptButtonText}>Camera</Text>
+                <Text style={[styles.receiptButtonText, { color: colors.primary }]}>Camera</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.receiptButton}
+                style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, borderWidth: 1.5, borderColor: colors.border, borderStyle: 'dashed', borderRadius: borderRadius.md, paddingVertical: spacing.md, backgroundColor: colors.surface }}
                 onPress={pickFromGallery}
               >
                 <Ionicons name="images" size={20} color={colors.primary} />
-                <Text style={styles.receiptButtonText}>Gallery</Text>
+                <Text style={[styles.receiptButtonText, { color: colors.primary }]}>Gallery</Text>
               </TouchableOpacity>
             </View>
           )}
 
-          {error ? <Text style={styles.error}>{error}</Text> : null}
+          {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
 
           <Button
             title="Save Expense"
@@ -322,7 +327,6 @@ export default function AddExpenseScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   flex: {
     flex: 1,
@@ -335,37 +339,11 @@ const styles = StyleSheet.create({
   label: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
-    color: colors.textSecondary,
   },
   payerRow: {
     gap: spacing.sm,
   },
-  payerChip: {
-    alignItems: 'center',
-    gap: spacing.xs,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.sm + 4,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    width: 80,
-  },
-  payerChipActive: {
-    borderColor: colors.primary,
-    backgroundColor: '#FFF0F0',
-  },
-  payerName: {
-    fontSize: fontSize.xs,
-    fontWeight: fontWeight.medium,
-    color: colors.textMuted,
-    textAlign: 'center',
-  },
-  payerNameActive: {
-    color: colors.primary,
-  },
   error: {
-    color: colors.danger,
     fontSize: fontSize.sm,
     textAlign: 'center',
     backgroundColor: '#FFEBEE',
@@ -373,26 +351,8 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.sm,
     overflow: 'hidden',
   },
-  receiptButtons: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  receiptButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    borderStyle: 'dashed',
-    borderRadius: borderRadius.md,
-    paddingVertical: spacing.md,
-    backgroundColor: colors.surface,
-  },
   receiptButtonText: {
     fontSize: fontSize.sm,
-    color: colors.primary,
     fontWeight: fontWeight.medium,
   },
 });

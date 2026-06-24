@@ -1,6 +1,7 @@
-import { View, Text, ScrollView, Switch, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, Switch, StyleSheet, TouchableOpacity, Alert, Share } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
+import { useGroups } from '@/hooks/useGroups';
 import { useTheme } from '@/context/ThemeContext';
 import { Header } from '@/components/shared/Header';
 import { ConfirmModal } from '@/components/shared/ConfirmModal';
@@ -9,8 +10,31 @@ import { useState } from 'react';
 
 export default function SettingsScreen() {
   const { user, logout } = useAuth();
+  const { groups } = useGroups(user?.id);
   const { isDark, toggleDarkMode, colors } = useTheme();
   const [showLogout, setShowLogout] = useState(false);
+
+  const handleExport = async () => {
+    try {
+      const data = {
+        exportedAt: new Date().toISOString(),
+        groups,
+      };
+      const json = JSON.stringify(data, null, 2);
+
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(json);
+        Alert.alert('Exported', 'Data copied to clipboard.');
+      } else {
+        await Share.share({
+          message: json,
+          title: 'Splittable Export',
+        });
+      }
+    } catch {
+      Alert.alert('Error', 'Failed to export data.');
+    }
+  };
 
   if (!user) return null;
 
@@ -88,6 +112,19 @@ export default function SettingsScreen() {
             </View>
           </View>
         </View>
+
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+          Data
+        </Text>
+
+        <TouchableOpacity
+          style={[styles.logoutCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={handleExport}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="download-outline" size={20} color={colors.primary} />
+          <Text style={[styles.exportText, { color: colors.primary }]}>Export Data (JSON)</Text>
+        </TouchableOpacity>
 
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
           Account
@@ -205,6 +242,10 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     fontWeight: fontWeight.semibold,
     color: '#E74C3C',
+  },
+  exportText: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
   },
   version: {
     fontSize: fontSize.xs,

@@ -1,7 +1,8 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '@/components/shared/Card';
-import { colors, fontSize, fontWeight, spacing } from '@/config/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { fontSize, fontWeight, spacing } from '@/config/theme';
 
 interface BalanceSummaryCardProps {
   netBalance: number;
@@ -12,6 +13,7 @@ export function BalanceSummaryCard({
   netBalance,
   currency,
 }: BalanceSummaryCardProps) {
+  const { colors } = useTheme();
   const isOwed = netBalance > 0;
   const absAmount = Math.abs(netBalance);
   const isSettled = Math.abs(netBalance) < 0.01;
@@ -20,18 +22,18 @@ export function BalanceSummaryCard({
     <Card style={styles.container}>
       {isSettled ? (
         <>
-          <View style={[styles.iconCircle, styles.settledCircle]}>
+          <View style={[styles.iconCircle, { backgroundColor: colors.textMuted }]}>
             <Ionicons name="checkmark" size={28} color={colors.textInverse} />
           </View>
-          <Text style={styles.label}>All Settled Up</Text>
-          <Text style={styles.amountSettled}>You're all square!</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>All Settled Up</Text>
+          <Text style={[styles.amountSettled, { color: colors.textMuted }]}>You're all square!</Text>
         </>
       ) : (
         <>
           <View
             style={[
               styles.iconCircle,
-              isOwed ? styles.positiveCircle : styles.negativeCircle,
+              { backgroundColor: isOwed ? colors.success : colors.danger },
             ]}
           >
             <Ionicons
@@ -40,13 +42,13 @@ export function BalanceSummaryCard({
               color={colors.textInverse}
             />
           </View>
-          <Text style={styles.label}>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>
             {isOwed ? 'You are owed' : 'You owe'}
           </Text>
           <Text
             style={[
               styles.amount,
-              isOwed ? styles.amountPositive : styles.amountNegative,
+              { color: isOwed ? colors.success : colors.danger },
             ]}
           >
             {isOwed ? '+' : '-'}${absAmount.toFixed(2)}
@@ -71,18 +73,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: spacing.xs,
   },
-  positiveCircle: {
-    backgroundColor: colors.success,
-  },
-  negativeCircle: {
-    backgroundColor: colors.danger,
-  },
-  settledCircle: {
-    backgroundColor: colors.textMuted,
-  },
   label: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
     fontWeight: fontWeight.medium,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -91,15 +83,8 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xxxl,
     fontWeight: fontWeight.bold,
   },
-  amountPositive: {
-    color: colors.success,
-  },
-  amountNegative: {
-    color: colors.danger,
-  },
   amountSettled: {
     fontSize: fontSize.md,
-    color: colors.textMuted,
     fontWeight: fontWeight.medium,
   },
 });

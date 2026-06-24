@@ -14,12 +14,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/context/ToastContext';
 import { Button } from '@/components/shared/Button';
 import { Input } from '@/components/shared/Input';
 import { Header } from '@/components/shared/Header';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { createGroup } from '@/services/groups.service';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Group name must be at least 2 characters'),
@@ -31,6 +33,8 @@ type FormData = z.infer<typeof formSchema>;
 export default function AddGroupScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const toast = useToast();
+  const { colors } = useTheme();
   const [serverError, setServerError] = useState('');
 
   const {
@@ -53,7 +57,8 @@ export default function AddGroupScreen() {
           user.id,
           user.displayName,
         );
-        router.back();
+        toast.showToast('Group created successfully!', 'success');
+        setTimeout(() => router.back(), 400);
       } catch (error) {
         setServerError(
           error instanceof Error ? error.message : 'Failed to create group.',
@@ -66,7 +71,7 @@ export default function AddGroupScreen() {
   if (!user) return null;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header title="New Group" onBack={() => router.back()} />
 
       <KeyboardAvoidingView
@@ -108,14 +113,14 @@ export default function AddGroupScreen() {
 
           <View style={styles.infoBox}>
             <Ionicons name="information-circle" size={18} color={colors.info} />
-            <Text style={styles.infoText}>
+            <Text style={[styles.infoText, { color: colors.textSecondary }]}>
               After creating the group, you can invite members from the group
               details screen.
             </Text>
           </View>
 
           {serverError ? (
-            <Text style={styles.error}>{serverError}</Text>
+            <Text style={[styles.error, { color: colors.danger }]}>{serverError}</Text>
           ) : null}
 
           <Button
@@ -133,7 +138,6 @@ export default function AddGroupScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   flex: {
     flex: 1,
@@ -153,11 +157,9 @@ const styles = StyleSheet.create({
   infoText: {
     flex: 1,
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
     lineHeight: 20,
   },
   error: {
-    color: colors.danger,
     fontSize: fontSize.sm,
     textAlign: 'center',
     backgroundColor: '#FFEBEE',

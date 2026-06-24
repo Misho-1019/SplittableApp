@@ -1,5 +1,6 @@
 import { View, TextInput, Text, StyleSheet, ViewStyle } from 'react-native';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
 
 interface InputProps {
   label?: string;
@@ -30,12 +31,14 @@ export function Input({
   style,
   rightIcon,
 }: InputProps) {
+  const { colors } = useTheme();
+
   return (
     <View style={[styles.container, style]}>
-      {label && <Text style={styles.label}>{label}</Text>}
-      <View style={[styles.inputWrapper, error && styles.inputError, !editable && styles.inputDisabled]}>
+      {label && <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>}
+      <View style={[styles.inputWrapper, { borderColor: colors.border, backgroundColor: colors.surface }, error && { borderColor: colors.danger }, !editable && { backgroundColor: colors.divider, opacity: 0.7 }]}>
         <TextInput
-          style={[styles.input, multiline && styles.inputMultiline]}
+          style={[styles.input, { color: colors.textPrimary }, multiline && styles.inputMultiline]}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
@@ -49,7 +52,7 @@ export function Input({
         />
         {rightIcon && <View style={styles.rightIcon}>{rightIcon}</View>}
       </View>
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error && <Text style={[styles.error, { color: colors.danger }]}>{error}</Text>}
     </View>
   );
 }
@@ -61,22 +64,18 @@ const styles = StyleSheet.create({
   label: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
-    color: colors.textSecondary,
     marginBottom: 2,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: colors.border,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.surface,
     paddingHorizontal: spacing.md,
   },
   input: {
     flex: 1,
     fontSize: fontSize.md,
-    color: colors.textPrimary,
     paddingVertical: spacing.sm + 4,
     minHeight: 48,
   },
@@ -84,19 +83,11 @@ const styles = StyleSheet.create({
     minHeight: 100,
     paddingTop: spacing.sm + 4,
   },
-  inputError: {
-    borderColor: colors.danger,
-  },
-  inputDisabled: {
-    backgroundColor: colors.divider,
-    opacity: 0.7,
-  },
   rightIcon: {
     marginLeft: spacing.sm,
   },
   error: {
     fontSize: fontSize.xs,
-    color: colors.danger,
     marginTop: 2,
   },
 });

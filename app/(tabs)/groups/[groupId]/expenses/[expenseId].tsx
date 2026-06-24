@@ -11,7 +11,8 @@ import { Header } from '@/components/shared/Header';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Button } from '@/components/shared/Button';
 import { Divider } from '@/components/shared/Divider';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
 import { formatRelativeDate } from '@/utils/dates';
 import type { Expense, SplitType } from '@/types';
 
@@ -31,6 +32,7 @@ export default function ExpenseDetailScreen() {
 
   const [expense, setExpense] = useState<Expense | null>(null);
   const [loading, setLoading] = useState(true);
+  const { colors } = useTheme();
 
   useEffect(() => {
     if (!groupId || !expenseId) return;
@@ -75,9 +77,9 @@ export default function ExpenseDetailScreen() {
 
   if (!expense) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Header title="Expense" onBack={() => router.back()} />
-        <Text style={styles.notFound}>Expense not found.</Text>
+        <Text style={[styles.notFound, { color: colors.textMuted }]}>Expense not found.</Text>
       </View>
     );
   }
@@ -85,7 +87,7 @@ export default function ExpenseDetailScreen() {
   const isCreator = user?.id === expense.createdBy;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header
         title="Expense"
         onBack={() => router.back()}
@@ -101,29 +103,29 @@ export default function ExpenseDetailScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         <Card style={styles.amountCard}>
-          <Text style={styles.amountLabel}>Amount</Text>
-          <Text style={styles.amountValue}>
+          <Text style={[styles.amountLabel, { color: colors.textSecondary }]}>Amount</Text>
+          <Text style={[styles.amountValue, { color: colors.textPrimary }]}>
             ${expense.amount.toFixed(2)}
-            <Text style={styles.currency}> {expense.currency}</Text>
+            <Text style={[styles.currency, { color: colors.textMuted }]}> {expense.currency}</Text>
           </Text>
         </Card>
 
         <Card>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Description</Text>
-            <Text style={styles.detailValue}>{expense.description}</Text>
+          <View style={[styles.detailRow, { borderBottomColor: colors.divider }]}>
+            <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Description</Text>
+            <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{expense.description}</Text>
           </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Paid by</Text>
-            <Text style={styles.detailValue}>{expense.paidByName}</Text>
+          <View style={[styles.detailRow, { borderBottomColor: colors.divider }]}>
+            <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Paid by</Text>
+            <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{expense.paidByName}</Text>
           </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Split type</Text>
+          <View style={[styles.detailRow, { borderBottomColor: colors.divider }]}>
+            <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Split type</Text>
             <Badge variant="info" label={splitTypeLabels[expense.splitType]} />
           </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Date</Text>
-            <Text style={styles.detailValue}>
+          <View style={[styles.detailRow, { borderBottomColor: colors.divider }]}>
+            <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Date</Text>
+            <Text style={[styles.detailValue, { color: colors.textPrimary }]}>
               {formatRelativeDate(expense.createdAt)}
             </Text>
           </View>
@@ -134,8 +136,8 @@ export default function ExpenseDetailScreen() {
         {expense.splitDetails.map((split) => (
           <Card key={split.userId} style={styles.splitRow}>
             <Avatar name={split.displayName} size="sm" />
-            <Text style={styles.splitName}>{split.displayName}</Text>
-            <Text style={styles.splitShare}>
+            <Text style={[styles.splitName, { color: colors.textPrimary }]}>{split.displayName}</Text>
+            <Text style={[styles.splitShare, { color: colors.textSecondary }]}>
               ${split.share.toFixed(2)}
               {split.percentage !== undefined &&
                 ` (${split.percentage}%)`}
@@ -148,7 +150,7 @@ export default function ExpenseDetailScreen() {
             <Divider label="Receipt" />
             <Card padded={false} style={styles.receiptPlaceholder}>
               <Ionicons name="image-outline" size={48} color={colors.textMuted} />
-              <Text style={styles.receiptText}>Receipt attached</Text>
+              <Text style={[styles.receiptText, { color: colors.textMuted }]}>Receipt attached</Text>
             </Card>
           </>
         )}
@@ -160,7 +162,6 @@ export default function ExpenseDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   scroll: {
     flex: 1,
@@ -172,7 +173,6 @@ const styles = StyleSheet.create({
   notFound: {
     textAlign: 'center',
     padding: spacing.xl,
-    color: colors.textMuted,
     fontSize: fontSize.md,
   },
   amountCard: {
@@ -181,7 +181,6 @@ const styles = StyleSheet.create({
   },
   amountLabel: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
     fontWeight: fontWeight.medium,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -190,12 +189,10 @@ const styles = StyleSheet.create({
   amountValue: {
     fontSize: fontSize.xxxl,
     fontWeight: fontWeight.bold,
-    color: colors.textPrimary,
   },
   currency: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.medium,
-    color: colors.textMuted,
   },
   detailRow: {
     flexDirection: 'row',
@@ -203,16 +200,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.xs + 2,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.divider,
   },
   detailLabel: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
     fontWeight: fontWeight.medium,
   },
   detailValue: {
     fontSize: fontSize.sm,
-    color: colors.textPrimary,
     fontWeight: fontWeight.semibold,
   },
   splitRow: {
@@ -223,13 +217,11 @@ const styles = StyleSheet.create({
   splitName: {
     flex: 1,
     fontSize: fontSize.sm,
-    color: colors.textPrimary,
     fontWeight: fontWeight.medium,
   },
   splitShare: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
-    color: colors.textSecondary,
   },
   receiptPlaceholder: {
     alignItems: 'center',
@@ -239,6 +231,5 @@ const styles = StyleSheet.create({
   },
   receiptText: {
     fontSize: fontSize.sm,
-    color: colors.textMuted,
   },
 });

@@ -23,9 +23,10 @@ import { Header } from '@/components/shared/Header';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { Divider } from '@/components/shared/Divider';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
 import type { Group, User } from '@/types';
-import { calculateGroupBalances } from '@/utils/calculateBalances';
+import { calculateGroupBalances, getBalancesFromPerspective } from '@/utils/calculateBalances';
 
 export default function GroupDetailScreen() {
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
@@ -37,6 +38,7 @@ export default function GroupDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [settlementStatuses, setSettlementStatuses] = useState<Record<string, 'none' | 'pending' | 'completed'>>({});
+  const { colors } = useTheme();
 
   useEffect(() => {
     if (!groupId) return;
@@ -117,7 +119,7 @@ export default function GroupDetailScreen() {
 
   if (error || !group) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Header title="Group" onBack={() => router.back()} />
         <EmptyState
           icon="alert-circle-outline"
@@ -131,7 +133,7 @@ export default function GroupDetailScreen() {
   const isCreator = user?.id === group.createdBy;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header title={group.name} onBack={() => router.back()} />
 
       <ScrollView
@@ -140,20 +142,20 @@ export default function GroupDetailScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Card style={styles.summaryCard}>
-          <Text style={styles.totalLabel}>Total Expenses</Text>
-          <Text style={styles.totalAmount}>
+          <Text style={[styles.totalLabel, { color: colors.textSecondary }]}>Total Expenses</Text>
+          <Text style={[styles.totalAmount, { color: colors.textPrimary }]}>
             ${group.totalExpenses.toFixed(2)}
           </Text>
           <View style={styles.metaRow}>
             <View style={styles.metaItem}>
               <Ionicons name="people" size={14} color={colors.textMuted} />
-              <Text style={styles.metaText}>
+              <Text style={[styles.metaText, { color: colors.textMuted }]}>
                 {group.members.length} member{group.members.length !== 1 ? 's' : ''}
               </Text>
             </View>
             <View style={styles.metaItem}>
               <Ionicons name="key" size={14} color={colors.textMuted} />
-              <Text style={styles.metaText}>{group.inviteCode}</Text>
+              <Text style={[styles.metaText, { color: colors.textMuted }]}>{group.inviteCode}</Text>
             </View>
           </View>
         </Card>
@@ -184,8 +186,8 @@ export default function GroupDetailScreen() {
               style={[
                 styles.balanceText,
                 currentUserBalance.netBalance > 0
-                  ? styles.balanceTextPositive
-                  : styles.balanceTextNegative,
+                  ? { color: colors.success }
+                  : { color: colors.danger },
               ]}
             >
               {currentUserBalance.netBalance > 0
@@ -197,18 +199,15 @@ export default function GroupDetailScreen() {
 
         {balances.length > 0 && (
           <View style={styles.balancesList}>
-            <Text style={styles.sectionTitle}>Balances</Text>
-            {balances
-              .filter((b) => Math.abs(b.netBalance) > 0.01 && b.userId !== user?.id)
-              .map((b) => {
-                const amountFromYou = -b.netBalance;
-                const isOwed = amountFromYou > 0;
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Balances</Text>
+            {getBalancesFromPerspective(balances, user?.id ?? '').map((b) => {
+                const isOwed = b.direction === 'receive';
                 const status = settlementStatuses[b.userId] ?? 'none';
 
                 return (
                   <View key={b.userId} style={styles.balanceRow}>
                     <View style={styles.balanceLeft}>
-                      <Text style={styles.balanceName}>{b.displayName}</Text>
+                      <Text style={[styles.balanceName, { color: colors.textPrimary }]}>{b.displayName}</Text>
                       {status !== 'none' && (
                         <Badge
                           variant={status === 'completed' ? 'completed' : 'pending'}
@@ -220,13 +219,13 @@ export default function GroupDetailScreen() {
                       style={[
                         styles.balanceAmount,
                         isOwed
-                          ? styles.balanceTextPositive
-                          : styles.balanceTextNegative,
+                          ? { color: colors.success }
+                          : { color: colors.danger },
                       ]}
                     >
                       {isOwed
-                        ? `+$${amountFromYou.toFixed(2)}`
-                        : `-$${Math.abs(amountFromYou).toFixed(2)}`}
+                        ? `+$${b.amount.toFixed(2)}`
+                        : `-$${b.amount.toFixed(2)}`}
                     </Text>
                   </View>
                 );
@@ -242,7 +241,7 @@ export default function GroupDetailScreen() {
           <BalanceChart balances={balances} currentUserId={user?.id ?? ''} />
         )}
 
-        <Text style={styles.sectionTitle}>Members</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Members</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -266,10 +265,10 @@ export default function GroupDetailScreen() {
                 })
               }
             >
-              <View style={styles.addMemberIcon}>
+              <View style={[styles.addMemberIcon, { borderColor: colors.primary }]}>
                 <Ionicons name="add" size={20} color={colors.primary} />
               </View>
-              <Text style={styles.addMemberLabel}>Manage</Text>
+              <Text style={[styles.addMemberLabel, { color: colors.primary }]}>Manage</Text>
             </TouchableOpacity>
           )}
         </ScrollView>
@@ -294,7 +293,7 @@ export default function GroupDetailScreen() {
       </ScrollView>
 
       <TouchableOpacity
-        style={styles.fab}
+        style={[styles.fab, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
         onPress={() =>
           router.push({
             pathname: '/(tabs)/groups/[groupId]/add-expense',
@@ -352,7 +351,6 @@ function ExpenseList({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   scroll: {
     flex: 1,
@@ -367,7 +365,6 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
     fontWeight: fontWeight.medium,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -376,7 +373,6 @@ const styles = StyleSheet.create({
   totalAmount: {
     fontSize: fontSize.xxxl,
     fontWeight: fontWeight.bold,
-    color: colors.textPrimary,
     marginBottom: spacing.md,
   },
   metaRow: {
@@ -390,7 +386,6 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: fontSize.xs,
-    color: colors.textMuted,
   },
   balanceBanner: {
     flexDirection: 'row',
@@ -409,12 +404,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
   },
-  balanceTextPositive: {
-    color: colors.success,
-  },
-  balanceTextNegative: {
-    color: colors.danger,
-  },
   balancesList: {
     gap: spacing.sm,
   },
@@ -432,7 +421,6 @@ const styles = StyleSheet.create({
   },
   balanceName: {
     fontSize: fontSize.sm,
-    color: colors.textPrimary,
     fontWeight: fontWeight.medium,
   },
   balanceAmount: {
@@ -442,7 +430,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
-    color: colors.textPrimary,
   },
   membersRow: {
     gap: spacing.sm,
@@ -458,14 +445,12 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     borderWidth: 1.5,
-    borderColor: colors.primary,
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
   },
   addMemberLabel: {
     fontSize: fontSize.xs,
-    color: colors.primary,
     fontWeight: fontWeight.medium,
   },
   fab: {
@@ -475,10 +460,8 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
     shadowRadius: 8,

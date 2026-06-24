@@ -1,22 +1,25 @@
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, fontSize, spacing } from '@/config/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { fontSize, spacing } from '@/config/theme';
 
 interface DividerProps {
   label?: string;
 }
 
 export function Divider({ label }: DividerProps) {
+  const { colors } = useTheme();
+
   if (label) {
     return (
       <View style={styles.row}>
-        <View style={styles.line} />
-        <Text style={styles.label}>{label}</Text>
-        <View style={styles.line} />
+        <View style={[styles.line, { backgroundColor: colors.divider }]} />
+        <Text style={[styles.label, { color: colors.textMuted }]}>{label}</Text>
+        <View style={[styles.line, { backgroundColor: colors.divider }]} />
       </View>
     );
   }
 
-  return <View style={styles.line} />;
+  return <View style={[styles.line, { backgroundColor: colors.divider }]} />;
 }
 
 const styles = StyleSheet.create({
@@ -29,10 +32,8 @@ const styles = StyleSheet.create({
   line: {
     flex: 1,
     height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.divider,
   },
   label: {
     fontSize: fontSize.sm,
-    color: colors.textMuted,
   },
 });

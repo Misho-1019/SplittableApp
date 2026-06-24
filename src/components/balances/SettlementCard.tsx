@@ -2,7 +2,8 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Badge } from '@/components/shared/Badge';
 import { Card } from '@/components/shared/Card';
-import { colors, fontSize, fontWeight, spacing } from '@/config/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { fontSize, fontWeight, spacing } from '@/config/theme';
 import { formatRelativeDate } from '@/utils/dates';
 import type { Settlement } from '@/types';
 
@@ -15,6 +16,7 @@ export function SettlementCard({
   settlement,
   currentUserId,
 }: SettlementCardProps) {
+  const { colors } = useTheme();
   const isSender = settlement.fromUserId === currentUserId;
   const otherName = isSender ? settlement.toUserName : settlement.fromUserName;
   const action = isSender ? `You paid ${otherName}` : `${otherName} paid you`;
@@ -28,10 +30,10 @@ export function SettlementCard({
       <View style={styles.left}>
         <Ionicons name={icon} size={20} color={iconColor} />
         <View style={styles.info}>
-          <Text style={styles.action} numberOfLines={1}>
+          <Text style={[styles.action, { color: colors.textPrimary }]} numberOfLines={1}>
             {action}
           </Text>
-          <Text style={styles.meta}>
+          <Text style={[styles.meta, { color: colors.textMuted }]}>
             {settlement.paidVia === 'card' ? '💳 Card' : '💵 Cash'}
             {' · '}
             {formatRelativeDate(settlement.createdAt)}
@@ -39,7 +41,7 @@ export function SettlementCard({
         </View>
       </View>
       <View style={styles.right}>
-        <Text style={styles.amount}>
+        <Text style={[styles.amount, { color: colors.textPrimary }]}>
           ${settlement.amount.toFixed(2)}
         </Text>
         <Badge
@@ -76,11 +78,9 @@ const styles = StyleSheet.create({
   action: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
-    color: colors.textPrimary,
   },
   meta: {
     fontSize: fontSize.xs,
-    color: colors.textMuted,
   },
   right: {
     alignItems: 'flex-end',
@@ -89,6 +89,5 @@ const styles = StyleSheet.create({
   amount: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.bold,
-    color: colors.textPrimary,
   },
 });

@@ -10,7 +10,8 @@ import { PaymentProgressModal } from '@/components/payment/PaymentProgressModal'
 import { AnimatedCheckmark } from '@/components/shared/AnimatedCheckmark';
 import { Button } from '@/components/shared/Button';
 import { Header } from '@/components/shared/Header';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
 
 type PaymentState = 'form' | 'processing' | 'success' | 'failed';
 
@@ -30,6 +31,7 @@ export default function PaymentScreen() {
   const [state, setState] = useState<PaymentState>('form');
   const [error, setError] = useState('');
   const [settlementId, setSettlementId] = useState('');
+  const { colors } = useTheme();
 
   const amount = parseFloat(params.amount ?? '0') || 0;
   const amountCents = Math.round(amount * 100);
@@ -102,8 +104,8 @@ export default function PaymentScreen() {
               }, 1000);
             }}
           />
-          <Text style={styles.statusTitle}>Payment Successful!</Text>
-          <Text style={styles.statusMessage}>
+          <Text style={[styles.statusTitle, { color: colors.textPrimary }]}>Payment Successful!</Text>
+          <Text style={[styles.statusMessage, { color: colors.textSecondary }]}>
             You paid {params.toUserName} ${amount.toFixed(2)}
           </Text>
         </View>
@@ -113,11 +115,11 @@ export default function PaymentScreen() {
     if (state === 'failed') {
       return (
         <View style={styles.statusCenter}>
-          <View style={styles.failedCircle}>
+          <View style={[styles.failedCircle, { backgroundColor: colors.danger }]}>
             <Ionicons name="close" size={36} color={colors.textInverse} />
           </View>
-          <Text style={styles.statusTitle}>Payment Failed</Text>
-          <Text style={styles.statusMessage}>{error}</Text>
+          <Text style={[styles.statusTitle, { color: colors.textPrimary }]}>Payment Failed</Text>
+          <Text style={[styles.statusMessage, { color: colors.textSecondary }]}>{error}</Text>
           <Button
             title="Try Again"
             onPress={() => setState('form')}
@@ -132,7 +134,7 @@ export default function PaymentScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header title="Payment" onBack={() => router.back()} />
 
       <ScrollView
@@ -142,15 +144,15 @@ export default function PaymentScreen() {
         {state === 'form' && (
           <>
             <Card style={styles.amountCard}>
-              <Text style={styles.payingLabel}>
+              <Text style={[styles.payingLabel, { color: colors.textSecondary }]}>
                 Paying {params.toUserName}
               </Text>
-              <Text style={styles.amountValue}>
+              <Text style={[styles.amountValue, { color: colors.textPrimary }]}>
                 ${amount.toFixed(2)}
               </Text>
             </Card>
 
-            <Text style={styles.sectionTitle}>Card Details</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Card Details</Text>
             <CardInput
               cardNumber={cardNumber}
               onCardNumberChange={setCardNumber}
@@ -162,7 +164,7 @@ export default function PaymentScreen() {
 
             <View style={styles.trustRow}>
               <Ionicons name="lock-closed" size={14} color={colors.textMuted} />
-              <Text style={styles.trustText}>
+              <Text style={[styles.trustText, { color: colors.textMuted }]}>
                 Secured by Stripe · Test mode · No real charges
               </Text>
             </View>
@@ -185,7 +187,6 @@ export default function PaymentScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   scroll: {
     padding: spacing.md,
@@ -197,18 +198,15 @@ const styles = StyleSheet.create({
   },
   payingLabel: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
     marginBottom: spacing.xs,
   },
   amountValue: {
     fontSize: fontSize.xxxl,
     fontWeight: fontWeight.bold,
-    color: colors.textPrimary,
   },
   sectionTitle: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
-    color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
@@ -220,37 +218,25 @@ const styles = StyleSheet.create({
   },
   trustText: {
     fontSize: fontSize.xs,
-    color: colors.textMuted,
   },
   statusCenter: {
     alignItems: 'center',
     paddingVertical: spacing.xxl,
     gap: spacing.md,
   },
-  successCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: colors.success,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   failedCircle: {
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: colors.danger,
     alignItems: 'center',
     justifyContent: 'center',
   },
   statusTitle: {
     fontSize: fontSize.xl,
     fontWeight: fontWeight.bold,
-    color: colors.textPrimary,
   },
   statusMessage: {
     fontSize: fontSize.md,
-    color: colors.textSecondary,
     textAlign: 'center',
     paddingHorizontal: spacing.lg,
   },

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { View, Animated, StyleSheet, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '@/config/theme';
+import { useTheme } from '@/context/ThemeContext';
 
 interface AnimatedCheckmarkProps {
   size?: number;
@@ -9,6 +9,7 @@ interface AnimatedCheckmarkProps {
 }
 
 export function AnimatedCheckmark({ size = 80, onDone }: AnimatedCheckmarkProps) {
+  const { colors } = useTheme();
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
   const rotationAnim = useRef(new Animated.Value(0)).current;
@@ -53,6 +54,7 @@ export function AnimatedCheckmark({ size = 80, onDone }: AnimatedCheckmarkProps)
           width: size,
           height: size,
           borderRadius: size / 2,
+          backgroundColor: colors.success,
           transform: [{ scale: scaleAnim }],
           opacity: opacityAnim,
         },
@@ -71,7 +73,6 @@ export function AnimatedCheckmark({ size = 80, onDone }: AnimatedCheckmarkProps)
 
 const styles = StyleSheet.create({
   circle: {
-    backgroundColor: colors.success,
     alignItems: 'center',
     justifyContent: 'center',
   },

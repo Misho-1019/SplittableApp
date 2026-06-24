@@ -36,9 +36,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  if (!loaded) return null;
-
-  const theme = isDark ? darkColors : colors;
+  const theme = loaded ? (isDark ? darkColors : colors) : colors;
 
   return (
     <ThemeContext.Provider value={{ isDark, toggleDarkMode, colors: theme }}>

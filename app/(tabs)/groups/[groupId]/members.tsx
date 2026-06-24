@@ -16,7 +16,8 @@ import { Avatar } from '@/components/shared/Avatar';
 import { Card } from '@/components/shared/Card';
 import { Header } from '@/components/shared/Header';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
 import type { Group, User } from '@/types';
 
 export default function ManageMembersScreen() {
@@ -32,6 +33,7 @@ export default function ManageMembersScreen() {
   const [searchResult, setSearchResult] = useState<User | null>(null);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState('');
+  const { colors } = useTheme();
 
   useEffect(() => {
     if (!groupId) return;
@@ -134,9 +136,9 @@ export default function ManageMembersScreen() {
 
   if (!group) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Header title="Members" onBack={() => router.back()} />
-        <Text style={styles.notFound}>Group not found.</Text>
+        <Text style={[styles.notFound, { color: colors.textMuted }]}>Group not found.</Text>
       </View>
     );
   }
@@ -144,19 +146,19 @@ export default function ManageMembersScreen() {
   const isCreator = user?.id === group.createdBy;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header title="Manage Members" onBack={() => router.back()} />
 
       <View style={styles.list}>
         {members.map((member) => (
-          <View key={member.id} style={styles.memberRow}>
+          <View key={member.id} style={[styles.memberRow, { backgroundColor: colors.surface }]}>
             <Avatar name={member.displayName} photoURL={member.photoURL} size="md" />
             <View style={styles.memberInfo}>
-              <Text style={styles.memberName}>
+              <Text style={[styles.memberName, { color: colors.textPrimary }]}>
                 {member.displayName}
                 {member.id === user?.id ? ' (You)' : ''}
               </Text>
-              <Text style={styles.memberEmail}>{member.email}</Text>
+              <Text style={[styles.memberEmail, { color: colors.textMuted }]}>{member.email}</Text>
             </View>
             {isCreator && member.id !== user?.id && (
               <TouchableOpacity
@@ -172,14 +174,14 @@ export default function ManageMembersScreen() {
 
       {isCreator && (
         <Card style={styles.addCard} padded>
-          <Text style={styles.addTitle}>Add Member</Text>
-          <Text style={styles.addHint}>
+          <Text style={[styles.addTitle, { color: colors.textPrimary }]}>Add Member</Text>
+          <Text style={[styles.addHint, { color: colors.textSecondary }]}>
             Search by email to invite someone to this group.
           </Text>
 
           <View style={styles.searchRow}>
             <TextInput
-              style={styles.searchInput}
+              style={[styles.searchInput, { borderColor: colors.border, color: colors.textPrimary, backgroundColor: colors.surface }]}
               value={searchEmail}
               onChangeText={setSearchEmail}
               placeholder="user@example.com"
@@ -190,7 +192,7 @@ export default function ManageMembersScreen() {
               returnKeyType="search"
             />
             <TouchableOpacity
-              style={[styles.searchButton, searching && { opacity: 0.6 }]}
+              style={[styles.searchButton, { backgroundColor: colors.primary }, searching && { opacity: 0.6 }]}
               onPress={handleSearch}
               disabled={searching}
             >
@@ -199,22 +201,22 @@ export default function ManageMembersScreen() {
           </View>
 
           {searchError ? (
-            <Text style={styles.searchError}>{searchError}</Text>
+            <Text style={[styles.searchError, { color: colors.danger }]}>{searchError}</Text>
           ) : null}
 
           {searchResult && (
-            <View style={styles.searchResultRow}>
+            <View style={[styles.searchResultRow, { borderTopColor: colors.divider }]}>
               <Avatar
                 name={searchResult.displayName}
                 photoURL={searchResult.photoURL}
                 size="sm"
               />
               <View style={styles.memberInfo}>
-                <Text style={styles.memberName}>{searchResult.displayName}</Text>
-                <Text style={styles.memberEmail}>{searchResult.email}</Text>
+                <Text style={[styles.memberName, { color: colors.textPrimary }]}>{searchResult.displayName}</Text>
+                <Text style={[styles.memberEmail, { color: colors.textMuted }]}>{searchResult.email}</Text>
               </View>
-              <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
-                <Text style={styles.addButtonText}>Add</Text>
+              <TouchableOpacity style={[styles.addButton, { backgroundColor: colors.success }]} onPress={handleAdd}>
+                <Text style={[styles.addButtonText, { color: colors.textInverse }]}>Add</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -227,12 +229,10 @@ export default function ManageMembersScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   notFound: {
     textAlign: 'center',
     padding: spacing.xl,
-    color: colors.textMuted,
     fontSize: fontSize.md,
   },
   list: {
@@ -242,7 +242,6 @@ const styles = StyleSheet.create({
   memberRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
     padding: spacing.sm + 4,
     borderRadius: borderRadius.md,
     gap: spacing.sm,
@@ -253,11 +252,9 @@ const styles = StyleSheet.create({
   memberName: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.medium,
-    color: colors.textPrimary,
   },
   memberEmail: {
     fontSize: fontSize.xs,
-    color: colors.textMuted,
     marginTop: 1,
   },
   removeButton: {
@@ -270,11 +267,9 @@ const styles = StyleSheet.create({
   addTitle: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
-    color: colors.textPrimary,
   },
   addHint: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
   },
   searchRow: {
     flexDirection: 'row',
@@ -283,16 +278,12 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     borderWidth: 1.5,
-    borderColor: colors.border,
     borderRadius: borderRadius.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm + 2,
     fontSize: fontSize.md,
-    color: colors.textPrimary,
-    backgroundColor: colors.surface,
   },
   searchButton: {
-    backgroundColor: colors.primary,
     width: 48,
     borderRadius: borderRadius.md,
     alignItems: 'center',
@@ -300,7 +291,6 @@ const styles = StyleSheet.create({
   },
   searchError: {
     fontSize: fontSize.sm,
-    color: colors.danger,
   },
   searchResultRow: {
     flexDirection: 'row',
@@ -308,10 +298,8 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingTop: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: colors.divider,
   },
   addButton: {
-    backgroundColor: colors.success,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs + 2,
     borderRadius: borderRadius.sm,
@@ -319,6 +307,5 @@ const styles = StyleSheet.create({
   addButtonText: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
-    color: colors.textInverse,
   },
 });

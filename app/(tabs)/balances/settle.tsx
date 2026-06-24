@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/context/ToastContext';
 import { createSettlement, getSettlementsBetweenUsers } from '@/services/settlements.service';
 import { Header } from '@/components/shared/Header';
 import { Card } from '@/components/shared/Card';
@@ -10,7 +11,8 @@ import { Button } from '@/components/shared/Button';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Badge } from '@/components/shared/Badge';
 import { ConfirmModal } from '@/components/shared/ConfirmModal';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
 import { formatRelativeDate } from '@/utils/dates';
 import type { Settlement } from '@/types';
 
@@ -28,11 +30,13 @@ export default function SettleUpScreen() {
   }>();
   const router = useRouter();
   const { user } = useAuth();
+  const toast = useToast();
 
   const [method, setMethod] = useState<PaymentMethod>('cash');
   const [saving, setSaving] = useState(false);
   const [existingSettlement, setExistingSettlement] = useState<Settlement | null>(null);
   const [checkingSettlement, setCheckingSettlement] = useState(true);
+  const { colors } = useTheme();
 
   const amount = parseFloat(params.amount ?? '0') || 0;
   const isReceiving = params.direction === 'receive';
@@ -88,7 +92,11 @@ export default function SettleUpScreen() {
         status: pendingStatus,
         stripePaymentIntentId: null,
       });
-      router.replace('/(tabs)/balances');
+      toast.showToast(
+        pendingStatus === 'completed' ? 'Payment recorded!' : 'Awaiting payment recorded.',
+        'success',
+      );
+      setTimeout(() => router.replace('/(tabs)/balances'), 300);
     } catch {
       setSaving(false);
     }
@@ -98,7 +106,7 @@ export default function SettleUpScreen() {
 
   if (checkingSettlement) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Header title="Settle Up" onBack={() => router.back()} />
         <LoadingSpinner fullScreen />
       </View>
@@ -110,7 +118,7 @@ export default function SettleUpScreen() {
     const otherName = params.toUserName;
 
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Header title="Settle Up" onBack={() => router.back()} />
 
         <View style={styles.content}>
@@ -118,7 +126,7 @@ export default function SettleUpScreen() {
             <View
               style={[
                 styles.iconCircle,
-                isComplete ? styles.iconCircleDone : styles.iconCirclePending,
+                { backgroundColor: isComplete ? colors.success : colors.warning },
               ]}
             >
               <Ionicons
@@ -127,16 +135,16 @@ export default function SettleUpScreen() {
                 color={colors.textInverse}
               />
             </View>
-            <Text style={styles.statusTitle}>
+            <Text style={[styles.statusTitle, { color: colors.textPrimary }]}>
               {isComplete ? 'Already Settled' : 'Payment Pending'}
             </Text>
-            <Text style={styles.statusMessage}>
+            <Text style={[styles.statusMessage, { color: colors.textSecondary }]}>
               {isComplete
                 ? `You ${isReceiving ? 'received' : 'paid'} $${amount.toFixed(2)} ${isReceiving ? 'from' : 'to'} ${otherName}.`
                 : `Awaiting $${amount.toFixed(2)} from ${otherName}.`}
             </Text>
             {existingSettlement.createdAt && (
-              <Text style={styles.statusDate}>
+              <Text style={[styles.statusDate, { color: colors.textMuted }]}>
                 {formatRelativeDate(existingSettlement.createdAt)}
               </Text>
             )}
@@ -157,7 +165,7 @@ export default function SettleUpScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header title="Settle Up" onBack={() => router.back()} />
 
       <View style={styles.content}>
@@ -165,7 +173,7 @@ export default function SettleUpScreen() {
           <View
             style={[
               styles.iconCircle,
-              isReceiving ? styles.iconCircleReceive : styles.iconCirclePay,
+              { backgroundColor: isReceiving ? colors.success : colors.danger },
             ]}
           >
             <Ionicons
@@ -174,24 +182,24 @@ export default function SettleUpScreen() {
               color={colors.textInverse}
             />
           </View>
-          <Text style={styles.label}>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>
             {isReceiving
               ? `${params.toUserName} owes you`
               : `You're paying ${params.toUserName}`}
           </Text>
-          <Text style={styles.groupName}>{params.groupName}</Text>
+          <Text style={[styles.groupName, { color: colors.textPrimary }]}>{params.groupName}</Text>
         </View>
 
         <Card style={styles.amountCard}>
-          <Text style={styles.amountValue}>
+          <Text style={[styles.amountValue, { color: colors.textPrimary }]}>
             ${amount.toFixed(2)}
           </Text>
-          <Text style={styles.amountCurrency}>{params.currency ?? 'USD'}</Text>
+          <Text style={[styles.amountCurrency, { color: colors.textMuted }]}>{params.currency ?? 'USD'}</Text>
         </Card>
 
         {isReceiving ? (
           <>
-            <Text style={styles.sectionTitle}>What would you like to do?</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>What would you like to do?</Text>
 
             <Button
               title="Waiting for Payment"
@@ -221,7 +229,7 @@ export default function SettleUpScreen() {
           </>
         ) : (
           <>
-            <Text style={styles.sectionTitle}>How would you like to pay?</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>How would you like to pay?</Text>
 
             <Pressable
               onPress={() =>
@@ -240,8 +248,8 @@ export default function SettleUpScreen() {
                 <View style={styles.cardOptionLeft}>
                   <Ionicons name="card" size={24} color={colors.primary} />
                   <View>
-                    <Text style={styles.cardOptionLabel}>Pay with Card</Text>
-                    <Text style={styles.cardOptionHint}>Visa, Mastercard, Amex</Text>
+                    <Text style={[styles.cardOptionLabel, { color: colors.textPrimary }]}>Pay with Card</Text>
+                    <Text style={[styles.cardOptionHint, { color: colors.textMuted }]}>Visa, Mastercard, Amex</Text>
                   </View>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
@@ -263,9 +271,9 @@ export default function SettleUpScreen() {
           </>
         )}
 
-        <View style={styles.infoBox}>
+        <View style={[styles.infoBox, { backgroundColor: colors.divider }]}>
           <Ionicons name="lock-closed" size={16} color={colors.textMuted} />
-          <Text style={styles.infoText}>
+          <Text style={[styles.infoText, { color: colors.textMuted }]}>
             {isReceiving
               ? 'Mark as received only if you already got the money. Use "Waiting" to track pending payments.'
               : 'Card payments secured by Stripe (test mode). No real charges are made.'}
@@ -290,7 +298,6 @@ export default function SettleUpScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
@@ -309,27 +316,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: spacing.sm,
   },
-  iconCirclePay: {
-    backgroundColor: colors.danger,
-  },
-  iconCircleReceive: {
-    backgroundColor: colors.success,
-  },
-  iconCircleDone: {
-    backgroundColor: colors.success,
-  },
-  iconCirclePending: {
-    backgroundColor: colors.warning,
-  },
   label: {
     fontSize: fontSize.md,
-    color: colors.textSecondary,
     textAlign: 'center',
   },
   groupName: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.semibold,
-    color: colors.textPrimary,
   },
   amountCard: {
     alignItems: 'center',
@@ -338,17 +331,14 @@ const styles = StyleSheet.create({
   amountValue: {
     fontSize: fontSize.xxxl,
     fontWeight: fontWeight.bold,
-    color: colors.textPrimary,
   },
   amountCurrency: {
     fontSize: fontSize.sm,
-    color: colors.textMuted,
     marginTop: spacing.xs,
   },
   sectionTitle: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
-    color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
@@ -356,30 +346,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: spacing.sm,
-    backgroundColor: colors.divider,
     padding: spacing.md,
     borderRadius: borderRadius.md,
   },
   infoText: {
     flex: 1,
     fontSize: fontSize.xs,
-    color: colors.textMuted,
     lineHeight: 18,
   },
   statusTitle: {
     fontSize: fontSize.xl,
     fontWeight: fontWeight.bold,
-    color: colors.textPrimary,
   },
   statusMessage: {
     fontSize: fontSize.md,
-    color: colors.textSecondary,
     textAlign: 'center',
     paddingHorizontal: spacing.md,
   },
   statusDate: {
     fontSize: fontSize.sm,
-    color: colors.textMuted,
   },
   cardOption: {
     flexDirection: 'row',
@@ -395,10 +380,8 @@ const styles = StyleSheet.create({
   cardOptionLabel: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.semibold,
-    color: colors.textPrimary,
   },
   cardOptionHint: {
     fontSize: fontSize.xs,
-    color: colors.textMuted,
   },
 });

@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
 import type { SplitType } from '@/types';
 
 interface SplitTypePickerProps {
@@ -14,19 +15,21 @@ const options: { type: SplitType; label: string }[] = [
 ];
 
 export function SplitTypePicker({ value, onChange }: SplitTypePickerProps) {
+  const { colors } = useTheme();
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.divider }]}>
       {options.map((option) => (
         <TouchableOpacity
           key={option.type}
-          style={[styles.option, value === option.type && styles.optionActive]}
+          style={[styles.option, value === option.type && { backgroundColor: colors.surface, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 2 }]}
           onPress={() => onChange(option.type)}
           activeOpacity={0.7}
         >
           <Text
             style={[
               styles.label,
-              value === option.type && styles.labelActive,
+              { color: value === option.type ? colors.primary : colors.textMuted },
             ]}
           >
             {option.label}
@@ -40,7 +43,6 @@ export function SplitTypePicker({ value, onChange }: SplitTypePickerProps) {
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: colors.divider,
     borderRadius: borderRadius.md,
     padding: 3,
     gap: 3,
@@ -52,20 +54,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm + 2,
     borderRadius: borderRadius.md - 2,
   },
-  optionActive: {
-    backgroundColor: colors.surface,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
   label: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
-    color: colors.textMuted,
-  },
-  labelActive: {
-    color: colors.primary,
   },
 });

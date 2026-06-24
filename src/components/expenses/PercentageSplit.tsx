@@ -2,7 +2,8 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '@/components/shared/Card';
 import { Avatar } from '@/components/shared/Avatar';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
 
 interface MemberPercent {
   id: string;
@@ -19,6 +20,8 @@ export function PercentageSplit({
   members,
   onPercentChange,
 }: PercentageSplitProps) {
+  const { colors } = useTheme();
+
   if (members.length === 0) return null;
 
   const total = members.reduce((sum, m) => sum + m.percentage, 0);
@@ -40,7 +43,7 @@ export function PercentageSplit({
       {members.map((member) => (
         <View key={member.id} style={styles.row}>
           <Avatar name={member.displayName} size="sm" />
-          <Text style={styles.name} numberOfLines={1}>
+          <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
             {member.displayName}
           </Text>
 
@@ -48,25 +51,29 @@ export function PercentageSplit({
             icon="remove"
             onPress={() => handleDecrement(member.id, member.percentage)}
             disabled={member.percentage <= 0}
+            colors={colors}
           />
 
-          <View style={styles.percentBox}>
-            <Text style={styles.percentText}>{member.percentage}%</Text>
+          <View style={[styles.percentBox, { backgroundColor: colors.divider }]}>
+            <Text style={[styles.percentText, { color: colors.textPrimary }]}>{member.percentage}%</Text>
           </View>
 
           <StepButton
             icon="add"
             onPress={() => handleIncrement(member.id, member.percentage)}
             disabled={member.percentage >= 100}
+            colors={colors}
           />
         </View>
       ))}
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, { borderTopColor: colors.divider }]}>
         <Text
           style={[
             styles.total,
-            isValid ? styles.totalValid : styles.totalInvalid,
+            isValid
+              ? { color: colors.success }
+              : { color: colors.warning },
           ]}
         >
           {isValid
@@ -82,16 +89,18 @@ function StepButton({
   icon,
   onPress,
   disabled,
+  colors,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   onPress: () => void;
   disabled: boolean;
+  colors: ReturnType<typeof useTheme>['colors'];
 }) {
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
-      style={[styles.stepButton, disabled && styles.stepButtonDisabled]}
+      style={[styles.stepButton, { borderColor: colors.border }, disabled && styles.stepButtonDisabled]}
     >
       <Ionicons
         name={icon}
@@ -112,14 +121,12 @@ const styles = StyleSheet.create({
   name: {
     flex: 1,
     fontSize: fontSize.sm,
-    color: colors.textPrimary,
   },
   stepButton: {
     width: 32,
     height: 32,
     borderRadius: borderRadius.sm,
     borderWidth: 1,
-    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -129,7 +136,6 @@ const styles = StyleSheet.create({
   percentBox: {
     minWidth: 48,
     alignItems: 'center',
-    backgroundColor: colors.divider,
     borderRadius: borderRadius.sm,
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.sm,
@@ -137,11 +143,9 @@ const styles = StyleSheet.create({
   percentText: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
-    color: colors.textPrimary,
   },
   footer: {
     borderTopWidth: 1,
-    borderTopColor: colors.divider,
     paddingTop: spacing.sm,
     marginTop: spacing.sm,
     alignItems: 'center',
@@ -149,11 +153,5 @@ const styles = StyleSheet.create({
   total: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.semibold,
-  },
-  totalValid: {
-    color: colors.success,
-  },
-  totalInvalid: {
-    color: colors.warning,
   },
 });

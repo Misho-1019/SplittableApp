@@ -1,7 +1,8 @@
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { PieChart } from 'react-native-chart-kit';
 import { Card } from '@/components/shared/Card';
-import { colors, fontSize, fontWeight, spacing } from '@/config/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { fontSize, fontWeight, spacing } from '@/config/theme';
 import type { Expense } from '@/types';
 
 interface ExpenseChartProps {
@@ -20,6 +21,8 @@ const chartColors = [
 ];
 
 export function ExpenseChart({ expenses }: ExpenseChartProps) {
+  const { colors } = useTheme();
+
   if (expenses.length === 0) return null;
 
   const paidByName = new Map<string, number>();
@@ -41,7 +44,7 @@ export function ExpenseChart({ expenses }: ExpenseChartProps) {
 
   return (
     <Card style={styles.container}>
-      <Text style={styles.title}>Spending by Member</Text>
+      <Text style={[styles.title, { color: colors.textPrimary }]}>Spending by Member</Text>
       <PieChart
         data={data}
         width={Dimensions.get('window').width - spacing.md * 4}
@@ -65,7 +68,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.semibold,
-    color: colors.textPrimary,
     marginBottom: spacing.sm,
     alignSelf: 'flex-start',
   },

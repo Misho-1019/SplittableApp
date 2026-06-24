@@ -1,5 +1,6 @@
 import { View, Text, Image, StyleSheet } from 'react-native';
-import { colors, fontSize, fontWeight } from '@/config/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { fontSize, fontWeight } from '@/config/theme';
 
 type AvatarSize = 'sm' | 'md' | 'lg' | 'xl';
 
@@ -45,6 +46,7 @@ function getColor(name: string): string {
 }
 
 export function Avatar({ photoURL, name, size = 'md' }: AvatarProps) {
+  const { colors } = useTheme();
   const dimensions = sizeMap[size];
   const bgColor = getColor(name);
 
@@ -54,7 +56,7 @@ export function Avatar({ photoURL, name, size = 'md' }: AvatarProps) {
         source={{ uri: photoURL }}
         style={[
           styles.image,
-          { width: dimensions.container, height: dimensions.container, borderRadius: dimensions.container / 2 },
+          { width: dimensions.container, height: dimensions.container, borderRadius: dimensions.container / 2, backgroundColor: colors.divider },
         ]}
       />
     );
@@ -72,7 +74,7 @@ export function Avatar({ photoURL, name, size = 'md' }: AvatarProps) {
         },
       ]}
     >
-      <Text style={[styles.initials, { fontSize: dimensions.font }]}>
+      <Text style={[styles.initials, { fontSize: dimensions.font, color: colors.textInverse }]}>
         {getInitials(name)}
       </Text>
     </View>
@@ -80,15 +82,12 @@ export function Avatar({ photoURL, name, size = 'md' }: AvatarProps) {
 }
 
 const styles = StyleSheet.create({
-  image: {
-    backgroundColor: colors.divider,
-  },
+  image: {},
   fallback: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   initials: {
-    color: colors.textInverse,
     fontWeight: fontWeight.semibold,
   },
 });
