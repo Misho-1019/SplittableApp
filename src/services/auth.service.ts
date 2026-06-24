@@ -1,6 +1,7 @@
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  updateProfile,
   signOut,
   onAuthStateChanged,
   User as FirebaseUser,
@@ -50,6 +51,8 @@ export async function register(
 ): Promise<User> {
   const credential = await createUserWithEmailAndPassword(auth, email, password);
   const user = credential.user;
+
+  await updateProfile(user, { displayName });
 
   try {
     await setDoc(doc(db, 'users', user.uid), {

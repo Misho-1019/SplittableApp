@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/context/ThemeContext';
 import { fontSize, fontWeight, spacing } from '@/config/theme';
 
@@ -14,6 +15,7 @@ interface HeaderProps {
 
 export function Header({ title, onBack, rightAction }: HeaderProps) {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
     <View
@@ -22,6 +24,7 @@ export function Header({ title, onBack, rightAction }: HeaderProps) {
         {
           backgroundColor: colors.surface,
           borderBottomColor: colors.border,
+          paddingTop: insets.top + spacing.sm + 4,
         },
       ]}
     >

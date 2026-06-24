@@ -1,4 +1,5 @@
 import { View, Text, ScrollView, Switch, StyleSheet, TouchableOpacity, Alert, Share, Modal, FlatList } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
 import { useGroups } from '@/hooks/useGroups';
@@ -13,6 +14,7 @@ export default function SettingsScreen() {
   const { user, logout } = useAuth();
   const { groups } = useGroups(user?.id);
   const { isDark, toggleDarkMode, colors } = useTheme();
+  const router = useRouter();
   const [showLogout, setShowLogout] = useState(false);
   const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState<(typeof currencies)[number]>(currencies[0]);
@@ -40,6 +42,7 @@ export default function SettingsScreen() {
     setShowLogout(false);
     try {
       await logout();
+      router.replace('/(auth)/login');
     } catch {
       // silently fail
     }
@@ -56,7 +59,7 @@ export default function SettingsScreen() {
         <View style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={[styles.avatarCircle, { backgroundColor: colors.primary }]}>
             <Text style={[styles.avatarText, { color: colors.textInverse }]}>
-              {user.displayName?.[0]?.toUpperCase() ?? '?'}
+              {user.displayName?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || '?'}
             </Text>
           </View>
           <View style={styles.profileInfo}>
