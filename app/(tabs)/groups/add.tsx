@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   Platform,
   ScrollView,
   TouchableOpacity,
+  BackHandler,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
@@ -18,6 +19,7 @@ import { useToast } from '@/context/ToastContext';
 import { Button } from '@/components/shared/Button';
 import { Input } from '@/components/shared/Input';
 import { Header } from '@/components/shared/Header';
+import { ConfirmModal } from '@/components/shared/ConfirmModal';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { createGroup } from '@/services/groups.service';
 import { useTheme } from '@/context/ThemeContext';
@@ -36,11 +38,12 @@ export default function AddGroupScreen() {
   const toast = useToast();
   const { colors } = useTheme();
   const [serverError, setServerError] = useState('');
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
 
   const {
     control,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: { name: '', description: '' },
@@ -68,11 +71,31 @@ export default function AddGroupScreen() {
     [user, router],
   );
 
+  const handleBack = useCallback(() => {
+    if (isDirty) {
+      setShowDiscardModal(true);
+    } else {
+      router.back();
+    }
+  }, [isDirty, router]);
+
+  useEffect(() => {
+    const onBackPress = () => {
+      if (isDirty) {
+        setShowDiscardModal(true);
+        return true;
+      }
+      return false;
+    };
+    BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+  }, [isDirty]);
+
   if (!user) return null;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Header title="New Group" onBack={() => router.back()} />
+      <Header title="New Group" onBack={handleBack} />
 
       <KeyboardAvoidingView
         style={styles.flex}
@@ -131,6 +154,19 @@ export default function AddGroupScreen() {
           />
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <ConfirmModal
+        visible={showDiscardModal}
+        title="Discard Changes"
+        message="You have unsaved changes. Are you sure you want to leave?"
+        confirmLabel="Discard"
+        confirmVariant="danger"
+        onConfirm={() => {
+          setShowDiscardModal(false);
+          router.back();
+        }}
+        onCancel={() => setShowDiscardModal(false)}
+      />
     </View>
   );
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  BackHandler,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -28,6 +29,7 @@ import { EqualSplit } from '@/components/expenses/EqualSplit';
 import { PercentageSplit } from '@/components/expenses/PercentageSplit';
 import { CustomSplit } from '@/components/expenses/CustomSplit';
 import { ReceiptThumbnail } from '@/components/expenses/ReceiptThumbnail';
+import { ConfirmModal } from '@/components/shared/ConfirmModal';
 import { useTheme } from '@/context/ThemeContext';
 import { fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
 import type { Group, User, SplitType, SplitDetail } from '@/types';
@@ -51,10 +53,33 @@ export default function AddExpenseScreen() {
   const [customShares, setCustomShares] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
   const { image: receiptUri, pickFromCamera, pickFromGallery, removeImage: removeReceipt } = useImagePicker({ quality: 0.7 });
 
   const paidByUser = members.find((m) => m.id === paidBy);
   const amountNum = parseFloat(amount) || 0;
+
+  const isDirty = description.trim() !== '' || amount !== '' || receiptUri !== null;
+
+  const handleBack = useCallback(() => {
+    if (isDirty) {
+      setShowDiscardModal(true);
+    } else {
+      router.back();
+    }
+  }, [isDirty, router]);
+
+  useEffect(() => {
+    const onBackPress = () => {
+      if (isDirty) {
+        setShowDiscardModal(true);
+        return true;
+      }
+      return false;
+    };
+    BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+  }, [isDirty]);
 
   useEffect(() => {
     if (!groupId) return;
@@ -202,7 +227,7 @@ export default function AddExpenseScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header
         title="Add Expense"
-        onBack={() => router.back()}
+        onBack={handleBack}
       />
 
       <KeyboardAvoidingView
@@ -230,7 +255,7 @@ export default function AddExpenseScreen() {
           <Text style={[styles.label, { color: colors.textSecondary }]}>Paid by</Text>
           <ScrollView
             horizontal
-            showsHorizontalScrollIndicator={false}
+            showsHorizontalScrollIndicator={true}
             contentContainerStyle={styles.payerRow}
           >
             {members.map((member) => (
@@ -329,6 +354,19 @@ export default function AddExpenseScreen() {
           />
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <ConfirmModal
+        visible={showDiscardModal}
+        title="Discard Changes"
+        message="You have unsaved changes. Are you sure you want to leave?"
+        confirmLabel="Discard"
+        confirmVariant="danger"
+        onConfirm={() => {
+          setShowDiscardModal(false);
+          router.back();
+        }}
+        onCancel={() => setShowDiscardModal(false)}
+      />
     </View>
   );
 }
