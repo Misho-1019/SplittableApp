@@ -13,12 +13,12 @@ export function Badge({ label, variant = 'info' }: BadgeProps) {
   const { colors } = useTheme();
 
   const variantStyles: Record<BadgeVariant, { bg: string; text: string }> = {
-    paid: { bg: '#E8F5E9', text: colors.success },
-    pending: { bg: '#FFF3E0', text: colors.warning },
-    processing: { bg: '#E3F2FD', text: colors.info },
-    completed: { bg: '#E8F5E9', text: colors.success },
-    failed: { bg: '#FFEBEE', text: colors.danger },
-    info: { bg: '#F3E5F5', text: '#9C27B0' },
+    paid: { bg: colors.successBackground, text: colors.success },
+    pending: { bg: colors.warningBackground, text: colors.warning },
+    processing: { bg: colors.infoBackground, text: colors.info },
+    completed: { bg: colors.successBackground, text: colors.success },
+    failed: { bg: colors.dangerBackground, text: colors.danger },
+    info: { bg: '#F3E5F5', text: colors.primary },
   };
 
   const style = variantStyles[variant];

@@ -164,9 +164,7 @@ export default function GroupDetailScreen() {
           <View
             style={[
               styles.balanceBanner,
-              currentUserBalance.netBalance > 0
-                ? styles.balancePositive
-                : styles.balanceNegative,
+              { backgroundColor: currentUserBalance.netBalance > 0 ? colors.successBackground : colors.dangerBackground },
             ]}
           >
             <Ionicons
@@ -394,12 +392,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     borderRadius: borderRadius.md,
   },
-  balancePositive: {
-    backgroundColor: '#E8F5E9',
-  },
-  balanceNegative: {
-    backgroundColor: '#FFEBEE',
-  },
+
   balanceText: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,

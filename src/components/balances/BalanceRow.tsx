@@ -51,7 +51,7 @@ export function BalanceRow({
       <View
         style={[
           styles.actionButton,
-          { backgroundColor: isReceive ? '#E8F5E9' : '#FFEBEE' },
+          { backgroundColor: isReceive ? colors.successBackground : colors.dangerBackground },
         ]}
       >
         <Text

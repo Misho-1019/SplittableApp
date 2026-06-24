@@ -24,7 +24,7 @@ export function ReceiptThumbnail({ uri, onPress, onRemove }: ReceiptThumbnailPro
         </TouchableOpacity>
       )}
 
-      <View style={styles.label}>
+      <View style={[styles.label, { backgroundColor: colors.labelOverlay }]}>
         <Ionicons name="camera" size={12} color={colors.textInverse} />
         <Text style={[styles.labelText, { color: colors.textInverse }]}>Receipt</Text>
       </View>
@@ -56,7 +56,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(0,0,0,0.6)',
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.sm,

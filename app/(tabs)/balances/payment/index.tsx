@@ -160,7 +160,7 @@ export default function PaymentScreen() {
               </Text>
             </Card>
 
-            <View style={styles.demoBanner}>
+            <View style={[styles.demoBanner, { backgroundColor: colors.infoBackground }]}>
               <Ionicons name="information-circle" size={18} color={colors.info} />
               <Text style={[styles.demoText, { color: colors.textSecondary }]}>
                 Demo mode — no real charges will be made
@@ -235,7 +235,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    backgroundColor: '#E3F2FD',
     padding: spacing.md,
     borderRadius: borderRadius.md,
   },

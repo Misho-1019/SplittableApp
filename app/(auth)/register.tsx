@@ -126,7 +126,7 @@ export default function RegisterScreen() {
             )}
           />
 
-          {serverError ? <Text style={[styles.error, { color: colors.danger, backgroundColor: '#FFEBEE' }]}>{serverError}</Text> : null}
+          {serverError ? <Text style={[styles.error, { color: colors.danger, backgroundColor: colors.dangerBackground }]}>{serverError}</Text> : null}
 
           <Button
             title="Create Account"

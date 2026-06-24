@@ -263,7 +263,7 @@ export default function AddExpenseScreen() {
                 key={member.id}
                 style={[
                   { alignItems: 'center', gap: spacing.xs, paddingVertical: spacing.sm, paddingHorizontal: spacing.sm + 4, borderRadius: borderRadius.lg, borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.surface, width: 80 },
-                  paidBy === member.id && { borderColor: colors.primary, backgroundColor: '#FFF0F0' },
+                  paidBy === member.id && { borderColor: colors.primary, backgroundColor: colors.primaryBackground },
                 ]}
                 onPress={() => setPaidBy(member.id)}
               >
@@ -344,7 +344,7 @@ export default function AddExpenseScreen() {
             </View>
           )}
 
-          {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
+          {error ? <Text style={[styles.error, { color: colors.danger, backgroundColor: colors.dangerBackground }]}>{error}</Text> : null}
 
           <Button
             title="Save Expense"
@@ -393,7 +393,6 @@ const styles = StyleSheet.create({
   error: {
     fontSize: fontSize.sm,
     textAlign: 'center',
-    backgroundColor: '#FFEBEE',
     padding: spacing.sm,
     borderRadius: borderRadius.sm,
     overflow: 'hidden',

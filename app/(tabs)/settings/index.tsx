@@ -60,7 +60,7 @@ export default function SettingsScreen() {
       >
         <View style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={[styles.avatarCircle, { backgroundColor: colors.primary }]}>
-            <Text style={styles.avatarText}>
+            <Text style={[styles.avatarText, { color: colors.textInverse }]}>
               {user.displayName?.[0]?.toUpperCase() ?? '?'}
             </Text>
           </View>
@@ -94,7 +94,7 @@ export default function SettingsScreen() {
               value={isDark}
               onValueChange={toggleDarkMode}
               trackColor={{ false: colors.divider, true: colors.primaryLight }}
-              thumbColor={isDark ? colors.primary : '#f4f3f4'}
+              thumbColor={isDark ? colors.primary : colors.divider}
               accessibilityRole="switch"
               accessibilityLabel="Dark Mode"
               accessibilityState={{ checked: isDark }}
@@ -150,7 +150,7 @@ export default function SettingsScreen() {
           accessibilityLabel="Log Out"
         >
           <Ionicons name="log-out-outline" size={20} color={colors.danger} />
-          <Text style={styles.logoutText}>Log Out</Text>
+          <Text style={[styles.logoutText, { color: colors.danger }]}>Log Out</Text>
         </TouchableOpacity>
 
         <Text style={[styles.version, { color: colors.textMuted }]}>
@@ -175,7 +175,7 @@ export default function SettingsScreen() {
         onRequestClose={() => setShowCurrencyPicker(false)}
       >
         <TouchableOpacity
-          style={[styles.modalOverlay]}
+          style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}
           activeOpacity={1}
           onPress={() => setShowCurrencyPicker(false)}
         >
@@ -240,7 +240,6 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: fontSize.xxl,
     fontWeight: fontWeight.bold,
-    color: '#FFFFFF',
   },
   profileInfo: {
     flex: 1,
@@ -300,7 +299,6 @@ const styles = StyleSheet.create({
   logoutText: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.semibold,
-    color: '#E74C3C',
   },
   exportText: {
     fontSize: fontSize.md,
@@ -313,7 +311,6 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },

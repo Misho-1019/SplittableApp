@@ -8,6 +8,12 @@ export const colors = {
   danger: '#E74C3C',
   info: '#3498DB',
 
+  successBackground: '#E8F5E9',
+  dangerBackground: '#FFEBEE',
+  warningBackground: '#FFF3E0',
+  infoBackground: '#E3F2FD',
+  primaryBackground: '#FFF0F0',
+
   background: '#FFF5F5',
   surface: '#FFFFFF',
   card: '#FFFFFF',
@@ -24,6 +30,7 @@ export const colors = {
   settled: '#C4A0A0',
 
   overlay: 'rgba(0, 0, 0, 0.5)',
+  labelOverlay: 'rgba(0, 0, 0, 0.6)',
 } as const;
 
 type Colors = Record<keyof typeof colors, string>;
@@ -37,6 +44,12 @@ export const darkColors: Colors = {
   warning: '#F39C12',
   danger: '#E74C3C',
   info: '#3498DB',
+
+  successBackground: '#0F2A15',
+  dangerBackground: '#2A1215',
+  warningBackground: '#2A1E10',
+  infoBackground: '#0E1A2A',
+  primaryBackground: '#2A1A1A',
 
   background: '#1A1414',
   surface: '#2A1F1F',
@@ -54,6 +67,7 @@ export const darkColors: Colors = {
   settled: '#8B6B6B',
 
   overlay: 'rgba(0, 0, 0, 0.7)',
+  labelOverlay: 'rgba(0, 0, 0, 0.7)',
 };
 
 export const spacing = {

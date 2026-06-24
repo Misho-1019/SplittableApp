@@ -44,7 +44,7 @@ export function GroupCard({ group, onPress, onDelete }: GroupCardProps) {
         accessibilityLabel={`${group.name}, ${memberCount} members, total ${group.totalExpenses.toFixed(2)} dollars`}
         accessibilityHint="Tap to view group details"
       >
-        <View style={styles.iconContainer}>
+        <View style={[styles.iconContainer, { backgroundColor: colors.primaryBackground }]}>
           <Ionicons name="people" size={24} color={colors.primary} />
         </View>
 
@@ -88,7 +88,6 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: borderRadius.md,
-    backgroundColor: '#FFF0F0',
     alignItems: 'center',
     justifyContent: 'center',
   },

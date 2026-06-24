@@ -134,7 +134,7 @@ export default function AddGroupScreen() {
             )}
           />
 
-          <View style={styles.infoBox}>
+          <View style={[styles.infoBox, { backgroundColor: colors.infoBackground }]}>
             <Ionicons name="information-circle" size={18} color={colors.info} />
             <Text style={[styles.infoText, { color: colors.textSecondary }]}>
               After creating the group, you can invite members from the group
@@ -143,7 +143,7 @@ export default function AddGroupScreen() {
           </View>
 
           {serverError ? (
-            <Text style={[styles.error, { color: colors.danger }]}>{serverError}</Text>
+            <Text style={[styles.error, { color: colors.danger, backgroundColor: colors.dangerBackground }]}>{serverError}</Text>
           ) : null}
 
           <Button
@@ -186,7 +186,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: spacing.sm,
-    backgroundColor: '#E3F2FD',
     padding: spacing.md,
     borderRadius: borderRadius.md,
   },
@@ -198,7 +197,6 @@ const styles = StyleSheet.create({
   error: {
     fontSize: fontSize.sm,
     textAlign: 'center',
-    backgroundColor: '#FFEBEE',
     padding: spacing.sm,
     borderRadius: borderRadius.sm,
     overflow: 'hidden',

@@ -92,7 +92,7 @@ export default function LoginScreen() {
           />
 
           {serverError ? (
-            <Text style={[styles.error, { color: colors.danger }]}>
+            <Text style={[styles.error, { color: colors.danger, backgroundColor: colors.dangerBackground }]}>
               {serverError}
             </Text>
           ) : null}
@@ -148,7 +148,6 @@ const styles = StyleSheet.create({
   error: {
     fontSize: fontSize.sm,
     textAlign: 'center',
-    backgroundColor: '#FFEBEE',
     padding: spacing.sm,
     borderRadius: 8,
     overflow: 'hidden',
