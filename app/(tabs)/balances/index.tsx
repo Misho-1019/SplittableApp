@@ -1,4 +1,4 @@
-import { View, FlatList, StyleSheet, RefreshControl } from 'react-native';
+import { View, Text, FlatList, StyleSheet, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useGroups } from '@/hooks/useGroups';
@@ -18,7 +18,7 @@ import {
 } from '@/utils/calculateBalances';
 import type { BalanceFromPerspective } from '@/utils/calculateBalances';
 import { useTheme } from '@/context/ThemeContext';
-import { spacing } from '@/config/theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '@/config/theme';
 import type { Settlement } from '@/types';
 import { useState, useEffect, useCallback } from 'react';
 
@@ -128,6 +128,12 @@ export default function BalancesListScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header title="Balances" />
 
+      {error && (
+        <View style={[styles.errorBanner, { backgroundColor: colors.danger }]}>
+          <Text style={[styles.errorText, { color: colors.textInverse }]}>{error.message}</Text>
+        </View>
+      )}
+
       {data.length === 0 ? (
         <EmptyState
           icon="checkmark-done-outline"
@@ -194,5 +200,16 @@ const styles = StyleSheet.create({
   list: {
     padding: spacing.md,
     gap: spacing.sm,
+  },
+  errorBanner: {
+    padding: spacing.md,
+    marginHorizontal: spacing.md,
+    borderRadius: borderRadius.sm,
+    marginBottom: spacing.sm,
+  },
+  errorText: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium,
+    textAlign: 'center',
   },
 });

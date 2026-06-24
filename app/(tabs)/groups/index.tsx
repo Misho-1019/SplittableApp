@@ -47,12 +47,6 @@ export default function GroupListScreen() {
         <View style={[styles.errorBanner, { backgroundColor: colors.danger }]}>
           <Ionicons name="warning" size={18} color={colors.textInverse} />
           <Text style={[styles.errorText, { color: colors.textInverse }]}>{error.message}</Text>
-          <TouchableOpacity
-            style={styles.errorClose}
-            onPress={() => router.replace('/(tabs)/groups')}
-          >
-            <Text style={[styles.retryText, { color: colors.textInverse }]}>Retry</Text>
-          </TouchableOpacity>
         </View>
       )}
 

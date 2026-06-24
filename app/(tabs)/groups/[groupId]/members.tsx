@@ -114,19 +114,19 @@ export default function ManageMembersScreen() {
           onPress: async () => {
             try {
               await removeMemberFromGroup(group.id, memberId);
-
-              setMembers((prev) => prev.filter((m) => m.id !== memberId));
-              setGroup((prev) =>
-                prev
-                  ? {
-                      ...prev,
-                      members: prev.members.filter((id) => id !== memberId),
-                    }
-                  : prev,
-              );
             } catch {
               Alert.alert('Error', 'Failed to remove member.');
+              return;
             }
+            setMembers((prev) => prev.filter((m) => m.id !== memberId));
+            setGroup((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    members: prev.members.filter((id) => id !== memberId),
+                  }
+                : prev,
+            );
           },
         },
       ],

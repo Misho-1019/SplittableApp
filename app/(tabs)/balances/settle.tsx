@@ -98,6 +98,7 @@ export default function SettleUpScreen() {
       );
       setTimeout(() => router.replace('/(tabs)/balances'), 300);
     } catch {
+      toast.showToast('Failed to record settlement. Please try again.', 'error');
       setSaving(false);
     }
   };

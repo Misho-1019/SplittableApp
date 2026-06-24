@@ -208,7 +208,7 @@ export default function AddExpenseScreen() {
           const { downloadURL } = await uploadReceipt(group.id, expense.id, receiptUri);
           expense.receiptPhotoURL = downloadURL;
         } catch {
-          // Receipt upload fails silently — expense still saved
+          toast.showToast('Expense saved but receipt upload failed.', 'info');
         }
       }
 
