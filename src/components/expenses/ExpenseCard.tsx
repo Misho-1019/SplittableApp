@@ -22,7 +22,13 @@ export function ExpenseCard({ expense, onPress }: ExpenseCardProps) {
   const { colors } = useTheme();
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={`${expense.description}, $${expense.amount.toFixed(2)}, paid by ${expense.paidByName}`}
+      accessibilityHint="Tap to view expense details"
+    >
       <Card>
         <View style={styles.header}>
           <Text style={[styles.description, { color: colors.textPrimary }]} numberOfLines={1}>

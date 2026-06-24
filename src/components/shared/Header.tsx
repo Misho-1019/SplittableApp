@@ -27,17 +27,29 @@ export function Header({ title, onBack, rightAction }: HeaderProps) {
     >
       <View style={styles.left}>
         {onBack && (
-          <TouchableOpacity onPress={onBack} style={styles.backButton} hitSlop={8}>
+          <TouchableOpacity
+            onPress={onBack}
+            style={styles.backButton}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
             <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
         )}
       </View>
-      <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
+      <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1} accessibilityRole="header">
         {title}
       </Text>
       <View style={styles.right}>
         {rightAction && (
-          <TouchableOpacity onPress={rightAction.onPress} style={styles.actionButton} hitSlop={8}>
+          <TouchableOpacity
+            onPress={rightAction.onPress}
+            style={styles.actionButton}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={rightAction.icon}
+          >
             <Ionicons name={rightAction.icon} size={24} color={colors.primary} />
           </TouchableOpacity>
         )}

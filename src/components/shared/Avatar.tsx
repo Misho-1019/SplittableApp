@@ -58,6 +58,7 @@ export function Avatar({ photoURL, name, size = 'md' }: AvatarProps) {
           styles.image,
           { width: dimensions.container, height: dimensions.container, borderRadius: dimensions.container / 2, backgroundColor: colors.divider },
         ]}
+        accessibilityLabel={name}
       />
     );
   }
@@ -73,6 +74,7 @@ export function Avatar({ photoURL, name, size = 'md' }: AvatarProps) {
           backgroundColor: bgColor,
         },
       ]}
+      accessibilityLabel={name}
     >
       <Text style={[styles.initials, { fontSize: dimensions.font, color: colors.textInverse }]}>
         {getInitials(name)}

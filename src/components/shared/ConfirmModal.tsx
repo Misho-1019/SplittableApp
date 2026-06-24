@@ -34,6 +34,7 @@ export function ConfirmModal({
       transparent
       animationType="fade"
       onRequestClose={onCancel}
+      accessibilityViewIsModal
     >
       <Pressable style={[styles.overlay, { backgroundColor: colors.overlay }]} onPress={onCancel}>
         <Pressable style={[styles.card, { backgroundColor: colors.surface }]} onPress={() => {}}>

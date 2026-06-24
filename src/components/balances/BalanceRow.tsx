@@ -28,6 +28,8 @@ export function BalanceRow({
       style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.border }]}
       onPress={onPress}
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={`${displayName}, ${groupName}, ${isReceive ? 'owes you' : 'you owe'} $${amount.toFixed(2)}`}
     >
       <Avatar name={displayName} size="md" />
       <View style={styles.info}>

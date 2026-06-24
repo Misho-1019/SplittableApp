@@ -95,6 +95,9 @@ export default function SettingsScreen() {
               onValueChange={toggleDarkMode}
               trackColor={{ false: colors.divider, true: colors.primaryLight }}
               thumbColor={isDark ? colors.primary : '#f4f3f4'}
+              accessibilityRole="switch"
+              accessibilityLabel="Dark Mode"
+              accessibilityState={{ checked: isDark }}
             />
           </View>
 
@@ -128,6 +131,8 @@ export default function SettingsScreen() {
           style={[styles.logoutCard, { backgroundColor: colors.card, borderColor: colors.border }]}
           onPress={handleExport}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Export Data as JSON"
         >
           <Ionicons name="download-outline" size={20} color={colors.primary} />
           <Text style={[styles.exportText, { color: colors.primary }]}>Export Data (JSON)</Text>
@@ -141,6 +146,8 @@ export default function SettingsScreen() {
           style={[styles.logoutCard, { backgroundColor: colors.card, borderColor: colors.border }]}
           onPress={() => setShowLogout(true)}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Log Out"
         >
           <Ionicons name="log-out-outline" size={20} color={colors.danger} />
           <Text style={styles.logoutText}>Log Out</Text>

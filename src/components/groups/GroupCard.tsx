@@ -22,6 +22,8 @@ export function GroupCard({ group, onPress, onDelete }: GroupCardProps) {
         style={[styles.deleteAction, { backgroundColor: colors.danger }]}
         onPress={onDelete}
         activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel={`Delete ${group.name}`}
       >
         <Ionicons name="trash-outline" size={22} color={colors.textInverse} />
         <Text style={[styles.deleteText, { color: colors.textInverse }]}>Delete</Text>
@@ -38,6 +40,9 @@ export function GroupCard({ group, onPress, onDelete }: GroupCardProps) {
         style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.border }]}
         onPress={onPress}
         activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel={`${group.name}, ${memberCount} members, total ${group.totalExpenses.toFixed(2)} dollars`}
+        accessibilityHint="Tap to view group details"
       >
         <View style={styles.iconContainer}>
           <Ionicons name="people" size={24} color={colors.primary} />

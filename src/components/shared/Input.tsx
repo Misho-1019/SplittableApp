@@ -49,6 +49,8 @@ export function Input({
           editable={editable}
           multiline={multiline}
           textAlignVertical={multiline ? 'top' : 'center'}
+          accessibilityLabel={label ?? placeholder}
+          accessibilityState={{ disabled: !editable }}
         />
         {rightIcon && <View style={styles.rightIcon}>{rightIcon}</View>}
       </View>
