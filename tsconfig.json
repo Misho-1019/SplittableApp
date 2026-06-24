@@ -15,5 +15,8 @@
     "**/*.ts",
     "**/*.tsx",
     "env.d.ts"
+  ],
+  "exclude": [
+    "functions"
   ]
 }

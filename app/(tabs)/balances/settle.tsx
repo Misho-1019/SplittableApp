@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
@@ -223,16 +223,30 @@ export default function SettleUpScreen() {
           <>
             <Text style={styles.sectionTitle}>How would you like to pay?</Text>
 
-            <Card style={styles.cardOption}>
-              <View style={styles.cardOptionLeft}>
-                <Ionicons name="card" size={24} color={colors.primary} />
-                <View>
-                  <Text style={styles.cardOptionLabel}>Pay with Card</Text>
-                  <Text style={styles.cardOptionHint}>Visa, Mastercard, Amex</Text>
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: '/(tabs)/balances/payment/index',
+                  params: {
+                    amount: params.amount,
+                    toUserName: params.toUserName,
+                    groupId: params.groupId,
+                    toUserId: params.toUserId,
+                  },
+                })
+              }
+            >
+              <Card style={styles.cardOption}>
+                <View style={styles.cardOptionLeft}>
+                  <Ionicons name="card" size={24} color={colors.primary} />
+                  <View>
+                    <Text style={styles.cardOptionLabel}>Pay with Card</Text>
+                    <Text style={styles.cardOptionHint}>Visa, Mastercard, Amex</Text>
+                  </View>
                 </View>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-            </Card>
+                <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+              </Card>
+            </Pressable>
 
             <Button
               title="Mark as Paid (Cash)"
