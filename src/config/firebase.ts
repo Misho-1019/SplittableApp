@@ -1,8 +1,9 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth, setPersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getFunctions } from 'firebase/functions';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
@@ -16,6 +17,25 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
+
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
+(async () => {
+  try {
+    const authModule = require('firebase/auth') as {
+      getReactNativePersistence: (
+        storage: typeof AsyncStorage,
+      ) => unknown;
+    };
+    await setPersistence(
+      auth,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      authModule.getReactNativePersistence(AsyncStorage) as any,
+    );
+  } catch {
+    // Persistence setup failed; auth state will be in-memory only
+  }
+})();
+
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 export const functions = getFunctions(app, 'us-central1');
