@@ -44,6 +44,7 @@ export default function RegisterScreen() {
     setServerError('');
     try {
       await register(data.email, data.password, data.displayName);
+      router.replace('/(tabs)/groups');
     } catch (error) {
       setServerError(getFirebaseErrorMessage(error));
     }

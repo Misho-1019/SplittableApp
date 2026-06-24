@@ -36,7 +36,8 @@
           "photosPermission": "Allow Splittable to access your photos to attach receipts.",
           "cameraPermission": "Allow Splittable to use your camera to capture receipts."
         }
-      ]
+      ],
+      "expo-font"
     ]
   }
 }

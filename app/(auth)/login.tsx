@@ -37,6 +37,7 @@ export default function LoginScreen() {
     setServerError('');
     try {
       await login(data.email, data.password);
+      router.replace('/(tabs)/groups');
     } catch (error) {
       setServerError(getFirebaseErrorMessage(error));
     }
