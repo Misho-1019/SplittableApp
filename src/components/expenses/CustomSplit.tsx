@@ -40,6 +40,7 @@ export function CustomSplit({
               placeholder="0.00"
               placeholderTextColor={colors.textMuted}
               keyboardType="decimal-pad"
+              accessibilityLabel={`Share for ${member.displayName}`}
             />
           </View>
         </View>

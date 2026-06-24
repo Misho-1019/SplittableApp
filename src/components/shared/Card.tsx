@@ -6,9 +6,10 @@ interface CardProps {
   children: React.ReactNode;
   style?: ViewStyle;
   padded?: boolean;
+  accessibilityLabel?: string;
 }
 
-export function Card({ children, style, padded = true }: CardProps) {
+export function Card({ children, style, padded = true, accessibilityLabel }: CardProps) {
   const { colors } = useTheme();
 
   return (
@@ -19,6 +20,7 @@ export function Card({ children, style, padded = true }: CardProps) {
         { backgroundColor: colors.card, borderColor: colors.border },
         style,
       ]}
+      accessibilityLabel={accessibilityLabel}
     >
       {children}
     </View>

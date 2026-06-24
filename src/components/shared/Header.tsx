@@ -30,7 +30,7 @@ export function Header({ title, onBack, rightAction }: HeaderProps) {
           <TouchableOpacity
             onPress={onBack}
             style={styles.backButton}
-            hitSlop={8}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             accessibilityRole="button"
             accessibilityLabel="Go back"
           >
@@ -46,7 +46,7 @@ export function Header({ title, onBack, rightAction }: HeaderProps) {
           <TouchableOpacity
             onPress={rightAction.onPress}
             style={styles.actionButton}
-            hitSlop={8}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             accessibilityRole="button"
             accessibilityLabel={rightAction.icon}
           >

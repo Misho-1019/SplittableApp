@@ -26,7 +26,7 @@ export function SettlementCard({
     settlement.status === 'completed' ? colors.success : colors.warning;
 
   return (
-    <Card style={styles.container}>
+    <Card style={styles.container} accessibilityLabel={`${action} $${settlement.amount.toFixed(2)}, ${settlement.status}`}>
       <View style={styles.left}>
         <Ionicons name={icon} size={20} color={iconColor} />
         <View style={styles.info}>

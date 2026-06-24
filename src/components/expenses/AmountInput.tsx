@@ -33,6 +33,7 @@ export function AmountInput({
           placeholderTextColor={colors.textMuted}
           keyboardType="decimal-pad"
           returnKeyType="done"
+          accessibilityLabel="Amount"
         />
       </View>
       {error && <Text style={[styles.error, { color: colors.danger }]}>{error}</Text>}

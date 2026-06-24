@@ -22,7 +22,7 @@ export function EmptyState({
   const { colors } = useTheme();
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} accessibilityLabel={title}>
       <View style={[styles.iconContainer, { backgroundColor: colors.divider }]}>
         <Ionicons name={icon} size={56} color={colors.textMuted} />
       </View>

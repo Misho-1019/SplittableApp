@@ -25,15 +25,10 @@ export default function SettingsScreen() {
       };
       const json = JSON.stringify(data, null, 2);
 
-      if (typeof navigator !== 'undefined' && navigator.clipboard) {
-        await navigator.clipboard.writeText(json);
-        Alert.alert('Exported', 'Data copied to clipboard.');
-      } else {
-        await Share.share({
-          message: json,
-          title: 'Splittable Export',
-        });
-      }
+      await Share.share({
+        message: json,
+        title: 'Splittable Export',
+      });
     } catch {
       Alert.alert('Error', 'Failed to export data.');
     }

@@ -81,6 +81,7 @@ export function CardInput({
           placeholderTextColor={colors.textMuted}
           keyboardType="numeric"
           maxLength={19}
+          accessibilityLabel="Card number"
         />
         {cardValid === false && (
           <Text style={[styles.errorHint, { color: colors.danger }]}>Invalid card number</Text>
@@ -98,6 +99,7 @@ export function CardInput({
             placeholderTextColor={colors.textMuted}
             keyboardType="numeric"
             maxLength={5}
+            accessibilityLabel="Expiry date"
           />
         </View>
 
@@ -112,6 +114,7 @@ export function CardInput({
             keyboardType="numeric"
             secureTextEntry
             maxLength={4}
+            accessibilityLabel="Security code"
           />
         </View>
       </View>

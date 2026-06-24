@@ -18,14 +18,14 @@ export function LoadingSpinner({
   if (fullScreen) {
     return (
       <View style={[styles.fullScreen, { backgroundColor: colors.overlay }]}>
-        <ActivityIndicator size={size} color={indicatorColor} />
+        <ActivityIndicator size={size} color={indicatorColor} accessibilityLabel="Loading" />
       </View>
     );
   }
 
   return (
     <View style={styles.inline}>
-      <ActivityIndicator size={size} color={indicatorColor} />
+      <ActivityIndicator size={size} color={indicatorColor} accessibilityLabel="Loading" />
     </View>
   );
 }

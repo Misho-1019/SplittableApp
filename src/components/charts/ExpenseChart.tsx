@@ -43,7 +43,7 @@ export function ExpenseChart({ expenses }: ExpenseChartProps) {
     .sort((a, b) => b.amount - a.amount);
 
   return (
-    <Card style={styles.container}>
+    <Card style={styles.container} accessibilityLabel={`Spending chart, ${data.length} members`}>
       <Text style={[styles.title, { color: colors.textPrimary }]}>Spending by Member</Text>
       <PieChart
         data={data}

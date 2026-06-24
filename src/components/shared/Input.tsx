@@ -48,6 +48,7 @@ export function Input({
           autoCapitalize={autoCapitalize}
           editable={editable}
           multiline={multiline}
+          verticalAlign={multiline ? 'top' : 'auto'}
           textAlignVertical={multiline ? 'top' : 'center'}
           accessibilityLabel={label ?? placeholder}
           accessibilityState={{ disabled: !editable }}

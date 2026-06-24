@@ -19,7 +19,7 @@ export function BalanceChart({ balances, currentUserId }: BalanceChartProps) {
   const sorted = [...entries].sort((a, b) => b.amount - a.amount);
 
   return (
-    <Card style={styles.container}>
+    <Card style={styles.container} accessibilityLabel={`Balance chart, ${sorted.length} members`}>
       <Text style={[styles.title, { color: colors.textPrimary }]}>Group Balances</Text>
       <BarChart
         data={{

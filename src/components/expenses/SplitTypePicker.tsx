@@ -25,6 +25,9 @@ export function SplitTypePicker({ value, onChange }: SplitTypePickerProps) {
           style={[styles.option, value === option.type && { backgroundColor: colors.surface, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 2 }]}
           onPress={() => onChange(option.type)}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={option.label}
+          accessibilityState={{ selected: value === option.type }}
         >
           <Text
             style={[
