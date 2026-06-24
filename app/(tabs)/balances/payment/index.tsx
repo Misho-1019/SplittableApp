@@ -8,6 +8,7 @@ import { Card } from '@/components/shared/Card';
 import { CardInput } from '@/components/payment/CardInput';
 import { PaymentProgressModal } from '@/components/payment/PaymentProgressModal';
 import { AnimatedCheckmark } from '@/components/shared/AnimatedCheckmark';
+import { Badge } from '@/components/shared/Badge';
 import { Button } from '@/components/shared/Button';
 import { Header } from '@/components/shared/Header';
 import { useTheme } from '@/context/ThemeContext';
@@ -159,6 +160,13 @@ export default function PaymentScreen() {
               </Text>
             </Card>
 
+            <View style={styles.demoBanner}>
+              <Ionicons name="information-circle" size={18} color={colors.info} />
+              <Text style={[styles.demoText, { color: colors.textSecondary }]}>
+                Demo mode — no real charges will be made
+              </Text>
+            </View>
+
             <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Card Details</Text>
             <CardInput
               cardNumber={cardNumber}
@@ -222,6 +230,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.xs,
+  },
+  demoBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: '#E3F2FD',
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
+  },
+  demoText: {
+    flex: 1,
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium,
   },
   trustText: {
     fontSize: fontSize.xs,

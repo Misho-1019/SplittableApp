@@ -20,7 +20,7 @@ export default function PaymentConfirmationScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Header title="Payment" onBack={() => router.replace('/(tabs)/balances')} />
+      <Header title="Payment" onBack={() => router.back()} />
 
       <View style={styles.content}>
         <View

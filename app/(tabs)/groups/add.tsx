@@ -58,7 +58,7 @@ export default function AddGroupScreen() {
           user.displayName,
         );
         toast.showToast('Group created successfully!', 'success');
-        setTimeout(() => router.back(), 400);
+        setTimeout(() => router.back(), 1200);
       } catch (error) {
         setServerError(
           error instanceof Error ? error.message : 'Failed to create group.',

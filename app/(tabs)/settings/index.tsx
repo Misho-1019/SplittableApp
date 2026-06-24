@@ -1,11 +1,12 @@
-import { View, Text, ScrollView, Switch, StyleSheet, TouchableOpacity, Alert, Share } from 'react-native';
+import { View, Text, ScrollView, Switch, StyleSheet, TouchableOpacity, Alert, Share, Modal, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
 import { useGroups } from '@/hooks/useGroups';
 import { useTheme } from '@/context/ThemeContext';
 import { Header } from '@/components/shared/Header';
 import { ConfirmModal } from '@/components/shared/ConfirmModal';
-import { fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
+import { fontSize, fontWeight, spacing, borderRadius, currencies } from '@/config/theme';
+import type { CurrencyCode } from '@/config/theme';
 import { useState } from 'react';
 
 export default function SettingsScreen() {
@@ -13,6 +14,8 @@ export default function SettingsScreen() {
   const { groups } = useGroups(user?.id);
   const { isDark, toggleDarkMode, colors } = useTheme();
   const [showLogout, setShowLogout] = useState(false);
+  const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
+  const [selectedCurrency, setSelectedCurrency] = useState<(typeof currencies)[number]>(currencies[0]);
 
   const handleExport = async () => {
     try {
@@ -97,7 +100,11 @@ export default function SettingsScreen() {
 
           <View style={[styles.settingDivider, { backgroundColor: colors.divider }]} />
 
-          <View style={styles.settingRow}>
+          <TouchableOpacity
+            style={styles.settingRow}
+            onPress={() => setShowCurrencyPicker(true)}
+            activeOpacity={0.6}
+          >
             <View style={styles.settingLeft}>
               <Ionicons name="cash-outline" size={20} color={colors.primary} />
               <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>
@@ -106,11 +113,11 @@ export default function SettingsScreen() {
             </View>
             <View style={styles.settingValue}>
               <Text style={[styles.settingValueText, { color: colors.textMuted }]}>
-                USD ($)
+                {selectedCurrency.code} ({selectedCurrency.symbol})
               </Text>
               <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
             </View>
-          </View>
+          </TouchableOpacity>
         </View>
 
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
@@ -153,6 +160,51 @@ export default function SettingsScreen() {
         onConfirm={handleLogout}
         onCancel={() => setShowLogout(false)}
       />
+
+      <Modal
+        visible={showCurrencyPicker}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCurrencyPicker(false)}
+      >
+        <TouchableOpacity
+          style={[styles.modalOverlay]}
+          activeOpacity={1}
+          onPress={() => setShowCurrencyPicker(false)}
+        >
+          <View
+            style={[styles.modalContent, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            onStartShouldSetResponder={() => true}
+          >
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Select Currency</Text>
+            <FlatList
+              data={currencies}
+              keyExtractor={(item) => item.code}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.currencyOption,
+                    selectedCurrency.code === item.code && { backgroundColor: colors.primary + '15' },
+                  ]}
+                  onPress={() => {
+                    setSelectedCurrency(item);
+                    setShowCurrencyPicker(false);
+                  }}
+                >
+                  <Text style={[styles.currencySymbol, { color: colors.primary }]}>{item.symbol}</Text>
+                  <View>
+                    <Text style={[styles.currencyName, { color: colors.textPrimary }]}>{item.name}</Text>
+                    <Text style={[styles.currencyCode, { color: colors.textMuted }]}>{item.code}</Text>
+                  </View>
+                  {selectedCurrency.code === item.code && (
+                    <Ionicons name="checkmark" size={20} color={colors.primary} />
+                  )}
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
@@ -251,5 +303,45 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     textAlign: 'center',
     marginTop: spacing.lg,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '85%',
+    maxHeight: '70%',
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    padding: spacing.md,
+  },
+  modalTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    marginBottom: spacing.md,
+    textAlign: 'center',
+  },
+  currencyOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.sm,
+    borderRadius: borderRadius.md,
+    gap: spacing.md,
+  },
+  currencySymbol: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.bold,
+    width: 32,
+    textAlign: 'center',
+  },
+  currencyName: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.medium,
+  },
+  currencyCode: {
+    fontSize: fontSize.xs,
   },
 });

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useRef } from 'react';
 import { View, Text, TextInput, StyleSheet } from 'react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
@@ -12,6 +12,21 @@ interface CardInputProps {
   onCvcChange: (value: string) => void;
 }
 
+function luhnCheck(digits: string): boolean {
+  let sum = 0;
+  let alternate = false;
+  for (let i = digits.length - 1; i >= 0; i--) {
+    let n = parseInt(digits[i], 10);
+    if (alternate) {
+      n *= 2;
+      if (n > 9) n -= 9;
+    }
+    sum += n;
+    alternate = !alternate;
+  }
+  return sum % 10 === 0;
+}
+
 export function CardInput({
   cardNumber,
   onCardNumberChange,
@@ -21,29 +36,45 @@ export function CardInput({
   onCvcChange,
 }: CardInputProps) {
   const { colors } = useTheme();
-  const formatCardNumber = useCallback((text: string) => {
-    const digits = text.replace(/\D/g, '').slice(0, 16);
-    return digits.replace(/(\d{4})(?=\d)/g, '$1 ');
-  }, []);
+  const prevCardRef = useRef(cardNumber);
 
-  const formatExpiry = useCallback((text: string) => {
+  const formatCardNumber = (text: string) => {
+    const raw = text.replace(/\D/g, '');
+    const prevRaw = prevCardRef.current.replace(/\D/g, '');
+
+    // Detect backspace through a formatting space
+    if (raw.length === prevRaw.length && text.length < prevCardRef.current.length) {
+      const trimmed = raw.slice(0, -1).slice(0, 16);
+      prevCardRef.current = trimmed;
+      return trimmed.replace(/(\d{4})(?=\d)/g, '$1 ');
+    }
+
+    const limited = raw.slice(0, 16);
+    prevCardRef.current = limited.replace(/(\d{4})(?=\d)/g, '$1 ');
+    return limited.replace(/(\d{4})(?=\d)/g, '$1 ');
+  };
+
+  const formatExpiry = (text: string) => {
     const digits = text.replace(/\D/g, '').slice(0, 4);
     if (digits.length >= 3) {
       return digits.slice(0, 2) + '/' + digits.slice(2);
     }
     return digits;
-  }, []);
+  };
 
-  const formatCvc = useCallback((text: string) => {
+  const formatCvc = (text: string) => {
     return text.replace(/\D/g, '').slice(0, 4);
-  }, []);
+  };
+
+  const cardDigits = cardNumber.replace(/\D/g, '');
+  const cardValid = cardDigits.length >= 13 ? luhnCheck(cardDigits) : null;
 
   return (
     <View style={styles.container}>
       <View style={styles.field}>
         <Text style={[styles.label, { color: colors.textSecondary }]}>Card Number</Text>
         <TextInput
-          style={[styles.input, { borderColor: colors.border, color: colors.textPrimary, backgroundColor: colors.surface }]}
+          style={[styles.input, { borderColor: cardValid === false ? colors.danger : colors.border, color: colors.textPrimary, backgroundColor: colors.surface }]}
           value={cardNumber}
           onChangeText={(t) => onCardNumberChange(formatCardNumber(t))}
           placeholder="4242 4242 4242 4242"
@@ -51,6 +82,9 @@ export function CardInput({
           keyboardType="numeric"
           maxLength={19}
         />
+        {cardValid === false && (
+          <Text style={[styles.errorHint, { color: colors.danger }]}>Invalid card number</Text>
+        )}
       </View>
 
       <View style={styles.row}>
@@ -117,5 +151,9 @@ const styles = StyleSheet.create({
   hint: {
     fontSize: fontSize.xs,
     textAlign: 'center',
+  },
+  errorHint: {
+    fontSize: fontSize.xs,
+    marginTop: 2,
   },
 });

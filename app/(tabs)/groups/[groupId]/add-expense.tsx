@@ -37,6 +37,7 @@ export default function AddExpenseScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const toast = useToast();
+  const { colors } = useTheme();
 
   const [group, setGroup] = useState<Group | null>(null);
   const [members, setMembers] = useState<User[]>([]);
@@ -50,14 +51,7 @@ export default function AddExpenseScreen() {
   const [customShares, setCustomShares] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const { colors } = useTheme();
-
-  const {
-    image: receiptUri,
-    pickFromCamera,
-    pickFromGallery,
-    removeImage: removeReceipt,
-  } = useImagePicker({ quality: 0.7 });
+  const { image: receiptUri, pickFromCamera, pickFromGallery, removeImage: removeReceipt } = useImagePicker({ quality: 0.7 });
 
   const paidByUser = members.find((m) => m.id === paidBy);
   const amountNum = parseFloat(amount) || 0;
@@ -65,17 +59,14 @@ export default function AddExpenseScreen() {
   useEffect(() => {
     if (!groupId) return;
     let cancelled = false;
-
     async function load() {
       const fetched = await getGroup(groupId);
       if (cancelled || !fetched) return;
       setGroup(fetched);
       setPaidBy(fetched.members[0]);
-
       const userDocs = await getUsers(fetched.members);
       if (cancelled) return;
       setMembers(userDocs);
-
       const initialPercent = Math.floor(100 / fetched.members.length);
       const pcts: Record<string, number> = {};
       const shares: Record<string, string> = {};
@@ -87,10 +78,28 @@ export default function AddExpenseScreen() {
       setCustomShares(shares);
       setLoadingData(false);
     }
-
     load();
     return () => { cancelled = true; };
   }, [groupId]);
+
+  useEffect(() => {
+    if (!group) return;
+    const initialPercent = Math.floor(100 / group.members.length);
+    if (splitType === 'percentage') {
+      const pcts: Record<string, number> = {};
+      group.members.forEach((id, i) => {
+        pcts[id] = i === group.members.length - 1 ? 100 - initialPercent * (group.members.length - 1) : initialPercent;
+      });
+      setPercentages(pcts);
+    }
+    if (splitType === 'custom') {
+      const shares: Record<string, string> = {};
+      group.members.forEach((id) => {
+        shares[id] = '';
+      });
+      setCustomShares(shares);
+    }
+  }, [splitType]);
 
   const splitData = useMemo(() => {
     if (splitType === 'equal') {

@@ -6,6 +6,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -192,11 +193,15 @@ export default function ManageMembersScreen() {
               returnKeyType="search"
             />
             <TouchableOpacity
-              style={[styles.searchButton, { backgroundColor: colors.primary }, searching && { opacity: 0.6 }]}
+              style={[styles.searchButton, { backgroundColor: colors.primary }]}
               onPress={handleSearch}
               disabled={searching}
             >
-              <Ionicons name="search" size={20} color={colors.textInverse} />
+              {searching ? (
+                <ActivityIndicator size="small" color={colors.textInverse} />
+              ) : (
+                <Ionicons name="search" size={20} color={colors.textInverse} />
+              )}
             </TouchableOpacity>
           </View>
 
