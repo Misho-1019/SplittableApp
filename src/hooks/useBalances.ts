@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from '@/config/firebase';
-import { calculateGroupBalances } from '@/utils/calculateBalances';
-import type { Balance, Expense, Group } from '@/types';
+import { calculateGroupBalances, applySettlementsToBalances } from '@/utils/calculateBalances';
+import type { Balance, Expense, Group, Settlement } from '@/types';
 
 export function useBalances(userGroups: Group[] | undefined) {
   const [balances, setBalances] = useState<Balance[]>([]);
@@ -43,13 +43,28 @@ export function useBalances(userGroups: Group[] | undefined) {
           displayName: group.memberNames[id] ?? id,
         }));
 
-        const groupBalances = calculateGroupBalances(
+        let groupBalances = calculateGroupBalances(
           expenses,
           group.id,
           group.name,
           'USD',
           members,
         );
+
+        // Apply completed settlements to balances
+        const settlementsSnap = await getDocs(
+          query(
+            collection(db, 'groups', group.id, 'settlements'),
+            orderBy('createdAt', 'desc'),
+          ),
+        );
+        const settlements: Settlement[] = settlementsSnap.docs.map((d) => ({
+          id: d.id,
+          groupId: group.id,
+          ...d.data(),
+        })) as Settlement[];
+
+        groupBalances = applySettlementsToBalances(groupBalances, settlements);
 
         allBalances.push(...groupBalances);
       }

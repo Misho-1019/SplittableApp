@@ -1,4 +1,4 @@
-import type { Expense, Balance } from '@/types';
+import type { Expense, Balance, Settlement } from '@/types';
 
 /**
  * Calculates net balances for all members of a group.
@@ -55,6 +55,38 @@ export function calculateGroupBalances(
 
 export function getNonZeroBalances(balances: Balance[]): Balance[] {
   return balances.filter((b) => Math.abs(b.netBalance) > 0.01);
+}
+
+/**
+ * Adjusts net balances to reflect completed settlements.
+ *
+ * When Alice pays Bob $X (a completed settlement):
+ *   - Alice's netBalance INCREASES by X (she reduced her debt / paid what she owed)
+ *   - Bob's netBalance DECREASES by X (he received payment / was paid what he was owed)
+ *
+ * Pending and failed settlements do not affect balances.
+ */
+export function applySettlementsToBalances(
+  balances: Balance[],
+  settlements: Settlement[],
+): Balance[] {
+  const result = balances.map((b) => ({ ...b }));
+
+  for (const s of settlements) {
+    if (s.status !== 'completed') continue;
+
+    const from = result.find((b) => b.userId === s.fromUserId);
+    const to = result.find((b) => b.userId === s.toUserId);
+
+    if (from) {
+      from.netBalance = Math.round((from.netBalance + s.amount) * 100) / 100;
+    }
+    if (to) {
+      to.netBalance = Math.round((to.netBalance - s.amount) * 100) / 100;
+    }
+  }
+
+  return result;
 }
 
 // ---------------------------------------------------------------------------
