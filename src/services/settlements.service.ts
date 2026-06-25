@@ -140,8 +140,9 @@ export async function getSettlementsBetweenUsers(
     .map((d) => buildSettlementFromDoc(d.id, groupId, d.data()))
     .filter(
       (s) =>
-        (s.fromUserId === userId1 && s.toUserId === userId2) ||
-        (s.fromUserId === userId2 && s.toUserId === userId1),
+        s.status !== 'failed' &&
+        ((s.fromUserId === userId1 && s.toUserId === userId2) ||
+         (s.fromUserId === userId2 && s.toUserId === userId1)),
     );
 }
 

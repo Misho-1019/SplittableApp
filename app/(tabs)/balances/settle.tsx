@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/context/ToastContext';
-import { createSettlement, getSettlementsBetweenUsers } from '@/services/settlements.service';
+import { createSettlement, getSettlementsBetweenUsers, updateSettlementStatus } from '@/services/settlements.service';
 import { Header } from '@/components/shared/Header';
 import { Card } from '@/components/shared/Card';
 import { Button } from '@/components/shared/Button';
@@ -52,7 +52,14 @@ export default function SettleUpScreen() {
           user!.id,
           params.toUserId,
         );
-        setExistingSettlement(settlements.length > 0 ? settlements[0] : null);
+        // Only consider settlements going in the same direction
+        const relevant = settlements.find((s) => {
+          if (isReceiving) {
+            return s.fromUserId === params.toUserId && s.toUserId === user!.id;
+          }
+          return s.fromUserId === user!.id && s.toUserId === params.toUserId;
+        });
+        setExistingSettlement(relevant ?? null);
       } finally {
         setCheckingSettlement(false);
       }
@@ -166,6 +173,26 @@ export default function SettleUpScreen() {
               label={existingSettlement.status}
             />
           </View>
+
+          {!isComplete && (
+            <Button
+              title="Mark as Completed"
+              onPress={async () => {
+                try {
+                  await updateSettlementStatus(
+                    params.groupId,
+                    existingSettlement.id,
+                    'completed',
+                  );
+                  toast.showToast('Payment marked as completed!', 'success');
+                  setTimeout(() => router.replace('/(tabs)/balances'), 300);
+                } catch {
+                  toast.showToast('Failed to update settlement.', 'error');
+                }
+              }}
+              variant="primary"
+            />
+          )}
 
           <Button
             title="Back to Balances"
