@@ -9,11 +9,12 @@ export async function uploadReceipt(
   const response = await fetch(uri);
   const blob = await response.blob();
 
-  const path = `receipts/${groupId}/${expenseId}.jpg`;
+  const ext = blob.type === 'image/png' ? 'png' : 'jpg';
+  const path = `receipts/${groupId}/${expenseId}.${ext}`;
   const storageRef = ref(storage, path);
 
   await uploadBytes(storageRef, blob, {
-    contentType: 'image/jpeg',
+    contentType: blob.type || 'image/jpeg',
   });
 
   const downloadURL = await getDownloadURL(storageRef);

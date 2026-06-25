@@ -34,6 +34,7 @@ export default function SettleUpScreen() {
 
   const [method, setMethod] = useState<PaymentMethod>('cash');
   const [saving, setSaving] = useState(false);
+  const [savingAction, setSavingAction] = useState<string | null>(null);
   const [existingSettlement, setExistingSettlement] = useState<Settlement | null>(null);
   const [checkingSettlement, setCheckingSettlement] = useState(true);
   const { colors } = useTheme();
@@ -75,10 +76,21 @@ export default function SettleUpScreen() {
   };
 
   const handleConfirm = async () => {
-    if (!user || !params.groupId || !params.toUserId || amount <= 0) return;
+    if (!user || !params.groupId || !params.toUserId || amount <= 0) {
+      if (amount <= 0) {
+        toast.showToast('Cannot settle a zero or negative amount.', 'error');
+      }
+      return;
+    }
+
+    if (user.id === params.toUserId) {
+      toast.showToast('You cannot settle with yourself.', 'error');
+      return;
+    }
 
     setModalVisible(false);
     setSaving(true);
+    setSavingAction(pendingStatus);
 
     try {
       await createSettlement(params.groupId, {
@@ -211,7 +223,7 @@ export default function SettleUpScreen() {
                   'pending',
                 )
               }
-              loading={saving}
+              loading={savingAction === 'pending'}
               variant="secondary"
             />
 
@@ -224,7 +236,7 @@ export default function SettleUpScreen() {
                   'completed',
                 )
               }
-              loading={saving}
+              loading={savingAction === 'completed'}
               variant="primary"
             />
           </>
@@ -266,7 +278,7 @@ export default function SettleUpScreen() {
                   'completed',
                 )
               }
-              loading={saving}
+              loading={savingAction === 'completed'}
               variant="primary"
             />
           </>

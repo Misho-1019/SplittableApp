@@ -101,36 +101,47 @@ export default function ManageMembersScreen() {
   };
 
   const handleRemove = (memberId: string, memberName: string) => {
-    if (!group || memberId === user?.id) return;
+    if (!group) return;
 
-    Alert.alert(
-      'Remove Member',
-      `Remove ${memberName} from "${group.name}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await removeMemberFromGroup(group.id, memberId);
-            } catch {
-              Alert.alert('Error', 'Failed to remove member.');
-              return;
-            }
-            setMembers((prev) => prev.filter((m) => m.id !== memberId));
-            setGroup((prev) =>
-              prev
-                ? {
-                    ...prev,
-                    members: prev.members.filter((id) => id !== memberId),
-                  }
-                : prev,
-            );
-          },
+    const isSelf = memberId === user?.id;
+    const isLeavingGroup = isSelf && !isCreator;
+    const isRemovingOther = !isSelf && isCreator;
+
+    if (!isLeavingGroup && !isRemovingOther) return;
+
+    const title = isLeavingGroup ? 'Leave Group' : 'Remove Member';
+    const message = isLeavingGroup
+      ? `Leave "${group.name}"? You can be re-added by the group creator.`
+      : `Remove ${memberName} from "${group.name}"?`;
+
+    Alert.alert(title, message, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: isLeavingGroup ? 'Leave' : 'Remove',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await removeMemberFromGroup(group.id, memberId);
+          } catch {
+            Alert.alert('Error', 'Failed to remove member.');
+            return;
+          }
+          if (isLeavingGroup) {
+            router.back();
+            return;
+          }
+          setMembers((prev) => prev.filter((m) => m.id !== memberId));
+          setGroup((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  members: prev.members.filter((id) => id !== memberId),
+                }
+              : prev,
+          );
         },
-      ],
-    );
+      },
+    ]);
   };
 
   if (loading) return <LoadingSpinner fullScreen />;
@@ -167,6 +178,14 @@ export default function ManageMembersScreen() {
                 onPress={() => handleRemove(member.id, member.displayName)}
               >
                 <Ionicons name="close-circle" size={22} color={colors.danger} />
+              </TouchableOpacity>
+            )}
+            {!isCreator && member.id === user?.id && (
+              <TouchableOpacity
+                style={styles.removeButton}
+                onPress={() => handleRemove(member.id, member.displayName)}
+              >
+                <Ionicons name="exit-outline" size={22} color={colors.danger} />
               </TouchableOpacity>
             )}
           </View>

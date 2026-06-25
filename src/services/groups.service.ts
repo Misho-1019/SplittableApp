@@ -23,11 +23,9 @@ import type { Group } from '@/types';
 
 function generateInviteCode(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let code = '';
-  for (let i = 0; i < 6; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return code;
+  const array = new Uint8Array(6);
+  crypto.getRandomValues(array);
+  return Array.from(array, (b) => chars[b % chars.length]).join('');
 }
 
 function buildGroupFromDoc(id: string, data: Record<string, unknown>): Group {

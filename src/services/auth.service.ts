@@ -6,19 +6,9 @@ import {
   onAuthStateChanged,
   User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { auth, db } from '@/config/firebase';
 import type { User } from '@/types';
-
-function mapFirebaseUser(firebaseUser: FirebaseUser): User {
-  return {
-    id: firebaseUser.uid,
-    email: firebaseUser.email ?? '',
-    displayName: firebaseUser.displayName ?? '',
-    photoURL: firebaseUser.photoURL,
-    createdAt: Timestamp.now(),
-  };
-}
 
 export function subscribeToAuth(
   onUser: (user: User | null) => void,
@@ -26,9 +16,17 @@ export function subscribeToAuth(
 ): () => void {
   onLoading(true);
 
-  return onAuthStateChanged(auth, (firebaseUser) => {
+  return onAuthStateChanged(auth, async (firebaseUser) => {
     if (firebaseUser) {
-      onUser(mapFirebaseUser(firebaseUser));
+      const snap = await getDoc(doc(db, 'users', firebaseUser.uid));
+      const userData = snap.exists() ? snap.data() : {};
+      onUser({
+        id: firebaseUser.uid,
+        email: firebaseUser.email ?? '',
+        displayName: firebaseUser.displayName ?? '',
+        photoURL: firebaseUser.photoURL,
+        createdAt: (userData.createdAt as Timestamp) ?? Timestamp.now(),
+      });
     } else {
       onUser(null);
     }
@@ -41,7 +39,17 @@ export async function login(
   password: string,
 ): Promise<User> {
   const credential = await signInWithEmailAndPassword(auth, email, password);
-  return mapFirebaseUser(credential.user);
+  const user = credential.user;
+  const snap = await getDoc(doc(db, 'users', user.uid));
+  const userData = snap.exists() ? snap.data() : {};
+
+  return {
+    id: user.uid,
+    email: user.email ?? '',
+    displayName: user.displayName ?? '',
+    photoURL: user.photoURL,
+    createdAt: (userData.createdAt as Timestamp) ?? Timestamp.now(),
+  };
 }
 
 export async function register(

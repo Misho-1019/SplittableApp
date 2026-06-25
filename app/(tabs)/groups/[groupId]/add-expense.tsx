@@ -16,6 +16,8 @@ import { useToast } from '@/context/ToastContext';
 import { getGroup } from '@/services/groups.service';
 import { getUsers } from '@/services/users.service';
 import { createExpense } from '@/services/expenses.service';
+import { updateDoc, doc } from 'firebase/firestore';
+import { db } from '@/config/firebase';
 import { uploadReceipt } from '@/services/storage.service';
 import { useImagePicker } from '@/hooks/useImagePicker';
 import { Header } from '@/components/shared/Header';
@@ -206,6 +208,9 @@ export default function AddExpenseScreen() {
       if (receiptUri) {
         try {
           const { downloadURL } = await uploadReceipt(group.id, expense.id, receiptUri);
+          await updateDoc(doc(db, 'groups', group.id, 'expenses', expense.id), {
+            receiptPhotoURL: downloadURL,
+          });
           expense.receiptPhotoURL = downloadURL;
         } catch {
           toast.showToast('Expense saved but receipt upload failed.', 'info');

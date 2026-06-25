@@ -64,6 +64,7 @@ export default function BalancesListScreen() {
   const netBalance = getOverallNetBalance(balances, user.id);
   const owedToYou = getOwedToUser(balances, user.id);
   const youOwe = getUserOwes(balances, user.id);
+  const hasAnyBalances = owedToYou.length > 0 || youOwe.length > 0;
 
   const handleSettleUp = (item: BalanceFromPerspective) => {
     router.push({
@@ -134,7 +135,7 @@ export default function BalancesListScreen() {
         </View>
       )}
 
-      {data.length === 0 ? (
+      {data.length === 0 && !hasAnyBalances ? (
         <EmptyState
           icon="checkmark-done-outline"
           title="All Settled Up"

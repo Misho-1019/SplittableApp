@@ -13,7 +13,8 @@ import {
   serverTimestamp,
   Timestamp,
 } from 'firebase/firestore';
-import { db } from '@/config/firebase';
+import { db, storage } from '@/config/firebase';
+import { ref, deleteObject } from 'firebase/storage';
 import type { Expense } from '@/types';
 
 function buildExpenseFromDoc(
@@ -43,25 +44,25 @@ export async function createExpense(
   data: Omit<Expense, 'id' | 'groupId' | 'createdAt'>,
 ): Promise<Expense> {
   const ref = doc(collection(db, 'groups', groupId, 'expenses'));
+  const groupRef = doc(db, 'groups', groupId);
 
-  const expense: Omit<Expense, 'createdAt'> = {
-    id: ref.id,
-    groupId,
-    ...data,
-  };
-
-  await setDoc(ref, {
-    ...expense,
-    createdAt: serverTimestamp(),
-  });
-
-  await updateDoc(doc(db, 'groups', groupId), {
-    totalExpenses: increment(data.amount),
-    updatedAt: serverTimestamp(),
+  await runTransaction(db, async (transaction) => {
+    transaction.set(ref, {
+      ...data,
+      id: ref.id,
+      groupId,
+      createdAt: serverTimestamp(),
+    });
+    transaction.update(groupRef, {
+      totalExpenses: increment(data.amount),
+      updatedAt: serverTimestamp(),
+    });
   });
 
   return {
-    ...expense,
+    id: ref.id,
+    groupId,
+    ...data,
     createdAt: Timestamp.now(),
   };
 }
@@ -116,4 +117,11 @@ export async function deleteExpense(
       totalExpenses: increment(-amount),
     });
   });
+
+  try {
+    const receiptRef = ref(storage, `receipts/${groupId}/${expenseId}.jpg`);
+    await deleteObject(receiptRef);
+  } catch {
+    // Receipt file cleanup is non-critical
+  }
 }
