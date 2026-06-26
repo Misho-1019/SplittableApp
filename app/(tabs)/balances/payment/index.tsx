@@ -84,6 +84,10 @@ export default function PaymentScreen() {
         <PaymentProgressModal
           visible
           message={`Securely processing your payment of $${amount.toFixed(2)}...`}
+          onCancel={() => {
+            setState('failed');
+            setError('Payment was cancelled.');
+          }}
         />
       );
     }

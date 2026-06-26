@@ -2,6 +2,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   updateProfile,
+  sendPasswordResetEmail,
   signOut,
   onAuthStateChanged,
   User as FirebaseUser,
@@ -86,4 +87,8 @@ export async function register(
 
 export async function logout(): Promise<void> {
   await signOut(auth);
+}
+
+export async function forgotPassword(email: string): Promise<void> {
+  await sendPasswordResetEmail(auth, email);
 }

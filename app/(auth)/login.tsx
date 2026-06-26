@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/hooks/useAuth';
+import { forgotPassword } from '@/services/auth.service';
 import { useTheme } from '@/context/ThemeContext';
 import { Button } from '@/components/shared/Button';
 import { Input } from '@/components/shared/Input';
@@ -41,6 +42,25 @@ export default function LoginScreen() {
     } catch (error) {
       setServerError(getFirebaseErrorMessage(error));
     }
+  };
+
+  const handleForgotPassword = () => {
+    Alert.prompt(
+      'Reset Password',
+      'Enter your email address to receive a password reset link.',
+      async (email) => {
+        if (!email) return;
+        try {
+          await forgotPassword(email.trim());
+          Alert.alert('Check Your Email', 'If an account exists for that email, a password reset link has been sent.');
+        } catch {
+          Alert.alert('Error', 'Failed to send reset email. Please try again.');
+        }
+      },
+      'plain-text',
+      '',
+      'email-address',
+    );
   };
 
   return (
@@ -90,6 +110,13 @@ export default function LoginScreen() {
               />
             )}
           />
+
+          <Text
+            style={[styles.forgotPassword, { color: colors.primary }]}
+            onPress={handleForgotPassword}
+          >
+            Forgot Password?
+          </Text>
 
           {serverError ? (
             <Text style={[styles.error, { color: colors.danger, backgroundColor: colors.dangerBackground }]}>
@@ -163,5 +190,10 @@ const styles = StyleSheet.create({
   link: {
     fontSize: fontSize.sm,
     fontWeight: '600',
+  },
+  forgotPassword: {
+    fontSize: fontSize.sm,
+    textAlign: 'right',
+    marginTop: -spacing.xs,
   },
 });

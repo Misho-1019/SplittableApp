@@ -130,6 +130,18 @@ export default function AddExpenseScreen() {
     }
   }, [splitType]);
 
+  useEffect(() => {
+    if (!group || splitType !== 'percentage') return;
+    const selected = group.members.filter((id) => selectedMembers.has(id) || id === paidBy);
+    if (selected.length === 0) return;
+    const initialPercent = Math.floor(100 / selected.length);
+    const pcts: Record<string, number> = {};
+    selected.forEach((id, i) => {
+      pcts[id] = i === selected.length - 1 ? 100 - initialPercent * (selected.length - 1) : initialPercent;
+    });
+    setPercentages(pcts);
+  }, [selectedMembers, splitType]);
+
   const splitData = useMemo(() => {
     const selected = members.filter((m) => selectedMembers.has(m.id) || m.id === paidBy);
     if (selected.length === 0) return [];
@@ -157,16 +169,18 @@ export default function AddExpenseScreen() {
   }, [splitType, members, selectedMembers, paidBy, amountNum, percentages, customShares]);
 
   const canSave = useMemo(() => {
-    if (!description.trim() || !amountNum || amountNum <= 0 || !paidBy) return false;
-    if (splitType === 'percentage') {
+    let reason = '';
+    if (!description.trim()) reason = 'Enter a description';
+    else if (!amountNum || amountNum <= 0) reason = 'Enter an amount greater than $0';
+    else if (!paidBy) reason = 'Select who paid';
+    else if (splitType === 'percentage') {
       const total = Object.values(percentages).reduce((s, p) => s + p, 0);
-      if (Math.abs(total - 100) > 0.5) return false;
-    }
-    if (splitType === 'custom') {
+      if (Math.abs(total - 100) > 0.5) reason = `Percentages total ${total.toFixed(0)}% — must equal 100%`;
+    } else if (splitType === 'custom') {
       const total = Object.values(customShares).reduce((s, v) => s + (parseFloat(v) || 0), 0);
-      if (Math.abs(total - amountNum) > 0.01) return false;
+      if (Math.abs(total - amountNum) > 0.01) reason = `Custom amounts total $${total.toFixed(2)} — must equal $${amountNum.toFixed(2)}`;
     }
-    return true;
+    return { valid: !reason, reason };
   }, [description, amountNum, paidBy, splitType, percentages, customShares]);
 
   const handlePercentageChange = (memberId: string, percentage: number) => {
@@ -178,7 +192,7 @@ export default function AddExpenseScreen() {
   };
 
   const handleSave = async () => {
-    if (!user || !group || !canSave) return;
+    if (!user || !group || !canSave.valid) return;
 
     const lastMember = members[members.length - 1];
     let finalSplit = [...splitData];
@@ -405,11 +419,15 @@ export default function AddExpenseScreen() {
 
           {error ? <Text style={[styles.error, { color: colors.danger, backgroundColor: colors.dangerBackground }]}>{error}</Text> : null}
 
+          {canSave.reason ? (
+            <Text style={[styles.validationHint, { color: colors.textMuted }]}>{canSave.reason}</Text>
+          ) : null}
+
           <Button
             title="Save Expense"
             onPress={handleSave}
             loading={saving}
-            disabled={!canSave}
+            disabled={!canSave.valid}
           />
         </ScrollView>
       </KeyboardAvoidingView>
@@ -459,6 +477,10 @@ const styles = StyleSheet.create({
   receiptButtonText: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
+  },
+  validationHint: {
+    fontSize: fontSize.sm,
+    textAlign: 'center',
   },
   splitChip: {
     alignItems: 'center',
