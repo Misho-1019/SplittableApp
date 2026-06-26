@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
 import { createPaymentIntent, confirmSettlement } from '@/services/stripe.service';
 import { Card } from '@/components/shared/Card';
-import { CardInput } from '@/components/payment/CardInput';
+import { CardInput, luhnCheck } from '@/components/payment/CardInput';
 import { PaymentProgressModal } from '@/components/payment/PaymentProgressModal';
 import { AnimatedCheckmark } from '@/components/shared/AnimatedCheckmark';
 import { Badge } from '@/components/shared/Badge';
@@ -41,7 +41,8 @@ export default function PaymentScreen() {
   const canPay =
     cardNumber.replace(/\s/g, '').length >= 15 &&
     expiry.length === 5 &&
-    cvc.length >= 3;
+    cvc.length >= 3 &&
+    luhnCheck(cardNumber.replace(/\s/g, ''));
 
   const handlePay = async () => {
     if (!user || !params.groupId || !params.toUserId || !canPay) return;

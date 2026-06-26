@@ -12,7 +12,7 @@ interface CardInputProps {
   onCvcChange: (value: string) => void;
 }
 
-function luhnCheck(digits: string): boolean {
+export function luhnCheck(digits: string): boolean {
   let sum = 0;
   let alternate = false;
   for (let i = digits.length - 1; i >= 0; i--) {

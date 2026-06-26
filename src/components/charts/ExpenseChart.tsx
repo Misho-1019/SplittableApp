@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import { PieChart } from 'react-native-chart-kit';
 import { Card } from '@/components/shared/Card';
 import { useTheme } from '@/context/ThemeContext';
@@ -22,6 +22,7 @@ const chartColors = [
 
 export function ExpenseChart({ expenses }: ExpenseChartProps) {
   const { colors } = useTheme();
+  const { width: screenWidth } = useWindowDimensions();
 
   if (expenses.length === 0) return null;
 
@@ -47,7 +48,7 @@ export function ExpenseChart({ expenses }: ExpenseChartProps) {
       <Text style={[styles.title, { color: colors.textPrimary }]}>Spending by Member</Text>
       <PieChart
         data={data}
-        width={Dimensions.get('window').width - spacing.md * 4}
+        width={screenWidth - spacing.md * 4}
         height={180}
         chartConfig={{
           color: () => colors.textPrimary,

@@ -351,7 +351,8 @@ export default function AddExpenseScreen() {
                     ]}
                     numberOfLines={1}
                   >
-                    {member.id === user?.id ? 'You' : member.displayName}
+                  {member.id === user?.id ? 'You' : member.displayName}
+                  {member.id === paidBy && <Ionicons name="lock-closed" size={10} color={colors.textMuted} />}
                   </Text>
                 </TouchableOpacity>
               );

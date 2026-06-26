@@ -139,7 +139,7 @@ export default function RegisterScreen() {
             <Text style={[styles.footerText, { color: colors.textSecondary }]}>Already have an account? </Text>
             <Text
               style={[styles.link, { color: colors.primary }]}
-              onPress={() => router.back()}
+              onPress={() => router.replace('/(auth)/login')}
             >
               Login
             </Text>

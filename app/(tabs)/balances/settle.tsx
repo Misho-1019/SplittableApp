@@ -229,6 +229,13 @@ export default function SettleUpScreen() {
           <>
             <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>What would you like to do?</Text>
 
+            <View style={[styles.infoBox, { backgroundColor: colors.divider }]}>
+              <Ionicons name="lock-closed" size={16} color={colors.textMuted} />
+              <Text style={[styles.infoText, { color: colors.textMuted }]}>
+                Mark as received only if you already got the money. Use "Waiting" to track pending payments.
+              </Text>
+            </View>
+
             <Button
               title="Waiting for Payment"
               onPress={() =>
@@ -258,6 +265,13 @@ export default function SettleUpScreen() {
         ) : (
           <>
             <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>How would you like to pay?</Text>
+
+            <View style={[styles.infoBox, { backgroundColor: colors.divider }]}>
+              <Ionicons name="lock-closed" size={16} color={colors.textMuted} />
+              <Text style={[styles.infoText, { color: colors.textMuted }]}>
+                Card payments secured by Stripe (test mode). No real charges are made.
+              </Text>
+            </View>
 
             <Pressable
               onPress={() =>
@@ -298,15 +312,6 @@ export default function SettleUpScreen() {
             />
           </>
         )}
-
-        <View style={[styles.infoBox, { backgroundColor: colors.divider }]}>
-          <Ionicons name="lock-closed" size={16} color={colors.textMuted} />
-          <Text style={[styles.infoText, { color: colors.textMuted }]}>
-            {isReceiving
-              ? 'Mark as received only if you already got the money. Use "Waiting" to track pending payments.'
-              : 'Card payments secured by Stripe (test mode). No real charges are made.'}
-          </Text>
-        </View>
 
         <ConfirmModal
           visible={modalVisible}

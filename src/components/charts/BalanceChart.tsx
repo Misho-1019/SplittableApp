@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import { BarChart } from 'react-native-chart-kit';
 import { Card } from '@/components/shared/Card';
 import { useTheme } from '@/context/ThemeContext';
@@ -12,6 +12,7 @@ interface BalanceChartProps {
 
 export function BalanceChart({ balances, currentUserId }: BalanceChartProps) {
   const { colors } = useTheme();
+  const { width: screenWidth } = useWindowDimensions();
   const entries = getBalancesFromPerspective(balances, currentUserId);
 
   if (entries.length === 0) return null;
@@ -32,7 +33,7 @@ export function BalanceChart({ balances, currentUserId }: BalanceChartProps) {
             },
           ],
         }}
-        width={Dimensions.get('window').width - spacing.md * 4}
+        width={screenWidth - spacing.md * 4}
         height={200}
         yAxisLabel="$"
         yAxisSuffix=""

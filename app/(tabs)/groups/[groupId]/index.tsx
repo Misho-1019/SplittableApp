@@ -11,6 +11,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
 import { useExpenses } from '@/hooks/useExpenses';
+import { usePreferences } from '@/context/PreferencesContext';
 import { getGroup, removeMemberFromGroup } from '@/services/groups.service';
 import { getUsers } from '@/services/users.service';
 import { getSettlementsBetweenUsers } from '@/services/settlements.service';
@@ -43,6 +44,7 @@ export default function GroupDetailScreen() {
   const [settlementStatuses, setSettlementStatuses] = useState<Record<string, 'none' | 'pending' | 'completed'>>({});
   const [settlements, setSettlements] = useState<Settlement[]>([]);
   const { colors } = useTheme();
+  const { currency } = usePreferences();
 
   useEffect(() => {
     if (!groupId) return;
@@ -123,7 +125,7 @@ export default function GroupDetailScreen() {
       expenses,
       group.id,
       group.name,
-      'USD',
+      currency.code,
       members.map((m) => ({ id: m.id, displayName: m.displayName })),
       user?.id ?? '',
       settlements,
@@ -214,7 +216,7 @@ export default function GroupDetailScreen() {
 
         {userBalances.length > 0 && (
           <View style={styles.balancesList}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Balances</Text>
+            <Divider label="Balances" />
             {userBalances.map((b) => {
                 const isOwed = b.direction === 'receive';
                 const status = settlementStatuses[b.userId] ?? 'none';
@@ -279,7 +281,7 @@ export default function GroupDetailScreen() {
               <View style={[styles.addMemberIcon, { borderColor: colors.primary }]}>
                 <Ionicons name="add" size={20} color={colors.primary} />
               </View>
-              <Text style={[styles.addMemberLabel, { color: colors.primary }]}>Manage</Text>
+              <Text style={[styles.addMemberLabel, { color: colors.primary }]}>Members</Text>
             </TouchableOpacity>
           )}
         </ScrollView>
