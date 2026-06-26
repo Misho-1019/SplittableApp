@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
 import { useGroups } from '@/hooks/useGroups';
 import { useTheme } from '@/context/ThemeContext';
+import { usePreferences } from '@/context/PreferencesContext';
 import { Header } from '@/components/shared/Header';
 import { Avatar } from '@/components/shared/Avatar';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -16,10 +17,10 @@ export default function SettingsScreen() {
   const { user, logout } = useAuth();
   const { groups } = useGroups(user?.id);
   const { isDark, toggleDarkMode, colors } = useTheme();
+  const { currency, setCurrency } = usePreferences();
   const router = useRouter();
   const [showLogout, setShowLogout] = useState(false);
   const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
-  const [selectedCurrency, setSelectedCurrency] = useState<(typeof currencies)[number]>(currencies[0]);
 
   const handleExport = async () => {
     try {
@@ -112,7 +113,7 @@ export default function SettingsScreen() {
             </View>
             <View style={styles.settingValue}>
               <Text style={[styles.settingValueText, { color: colors.textMuted }]}>
-                {selectedCurrency.code} ({selectedCurrency.symbol})
+                {currency.code} ({currency.symbol})
               </Text>
               <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
             </View>
@@ -187,10 +188,10 @@ export default function SettingsScreen() {
                 <TouchableOpacity
                   style={[
                     styles.currencyOption,
-                    selectedCurrency.code === item.code && { backgroundColor: colors.primary + '15' },
+                    currency.code === item.code && { backgroundColor: colors.primary + '15' },
                   ]}
                   onPress={() => {
-                    setSelectedCurrency(item);
+                    setCurrency(item);
                     setShowCurrencyPicker(false);
                   }}
                 >
@@ -199,7 +200,7 @@ export default function SettingsScreen() {
                     <Text style={[styles.currencyName, { color: colors.textPrimary }]}>{item.name}</Text>
                     <Text style={[styles.currencyCode, { color: colors.textMuted }]}>{item.code}</Text>
                   </View>
-                  {selectedCurrency.code === item.code && (
+                  {currency.code === item.code && (
                     <Ionicons name="checkmark" size={20} color={colors.primary} />
                   )}
                 </TouchableOpacity>

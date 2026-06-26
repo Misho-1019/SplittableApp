@@ -316,7 +316,20 @@ export default function GroupDetailScreen() {
 
         <Divider label="Expenses" />
 
-          <ExpenseList
+        <TouchableOpacity
+          style={[styles.addExpenseButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          onPress={() =>
+            router.push({
+              pathname: '/(tabs)/groups/[groupId]/add-expense',
+              params: { groupId: group.id },
+            })
+          }
+        >
+          <Ionicons name="add-circle-outline" size={22} color={colors.primary} />
+          <Text style={[styles.addExpenseLabel, { color: colors.primary }]}>New Expense</Text>
+        </TouchableOpacity>
+
+        <ExpenseList
             groupId={group.id}
             userId={user?.id ?? ''}
             onAddExpense={() =>
@@ -525,6 +538,21 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   leaveText: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+  },
+  addExpenseButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm + 4,
+    borderWidth: 1.5,
+    borderRadius: borderRadius.md,
+    borderStyle: 'dashed',
+    marginBottom: spacing.sm,
+  },
+  addExpenseLabel: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.semibold,
   },

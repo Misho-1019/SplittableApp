@@ -13,6 +13,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/context/ToastContext';
+import { usePreferences } from '@/context/PreferencesContext';
 import { getGroup } from '@/services/groups.service';
 import { getUsers } from '@/services/users.service';
 import { createExpense } from '@/services/expenses.service';
@@ -42,6 +43,7 @@ export default function AddExpenseScreen() {
   const { user } = useAuth();
   const toast = useToast();
   const { colors } = useTheme();
+  const { currency } = usePreferences();
 
   const [group, setGroup] = useState<Group | null>(null);
   const [members, setMembers] = useState<User[]>([]);
@@ -214,7 +216,7 @@ export default function AddExpenseScreen() {
       const expense = await createExpense(group.id, {
         description: description.trim(),
         amount: amountNum,
-        currency: 'USD',
+        currency: currency.code,
         paidBy,
         paidByName: paidByUser?.displayName ?? '',
         splitType,
@@ -275,6 +277,7 @@ export default function AddExpenseScreen() {
           <AmountInput
             value={amount}
             onChangeText={setAmount}
+            currency={currency.symbol}
             error={amount.trim() && (parseFloat(amount) || 0) <= 0 ? 'Enter a valid amount' : undefined}
           />
 

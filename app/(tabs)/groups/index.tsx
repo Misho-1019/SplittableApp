@@ -57,13 +57,41 @@ export default function GroupListScreen() {
           <GroupCardSkeleton />
         </View>
       ) : groups.length === 0 ? (
-        <EmptyState
-          icon="people-outline"
-          title="No Groups Yet"
-          message="Create a group and start splitting expenses with friends."
-          actionLabel="Create Group"
-          onAction={() => router.push('/(tabs)/groups/add')}
-        />
+        <View style={styles.emptyWrap}>
+          <EmptyState
+            icon="people-outline"
+            title="Welcome to Splittable"
+            message="Create a group, invite friends, add expenses, and settle up. Here's how it works:"
+            actionLabel="Create Group"
+            onAction={() => router.push('/(tabs)/groups/add')}
+          />
+          <View style={styles.onboardingSteps}>
+            <View style={styles.onboardingStep}>
+              <Ionicons name="people-circle-outline" size={24} color={colors.primary} />
+              <Text style={[styles.onboardingText, { color: colors.textSecondary }]}>
+                <Text style={{ color: colors.textPrimary }}>1. Create a group</Text> — Trip, apartment, dinner...
+              </Text>
+            </View>
+            <View style={styles.onboardingStep}>
+              <Ionicons name="person-add-outline" size={24} color={colors.primary} />
+              <Text style={[styles.onboardingText, { color: colors.textSecondary }]}>
+                <Text style={{ color: colors.textPrimary }}>2. Invite friends</Text> — Share your invite code
+              </Text>
+            </View>
+            <View style={styles.onboardingStep}>
+              <Ionicons name="receipt-outline" size={24} color={colors.primary} />
+              <Text style={[styles.onboardingText, { color: colors.textSecondary }]}>
+                <Text style={{ color: colors.textPrimary }}>3. Add expenses</Text> — Split equally or customize
+              </Text>
+            </View>
+            <View style={styles.onboardingStep}>
+              <Ionicons name="cash-outline" size={24} color={colors.primary} />
+              <Text style={[styles.onboardingText, { color: colors.textSecondary }]}>
+                <Text style={{ color: colors.textPrimary }}>4. Settle up</Text> — Mark as paid when done
+              </Text>
+            </View>
+          </View>
+        </View>
       ) : (
         <FlatList
           data={groups}
@@ -130,5 +158,23 @@ const styles = StyleSheet.create({
   skeletonList: {
     padding: spacing.md,
     gap: spacing.sm,
+  },
+  emptyWrap: {
+    flex: 1,
+    paddingHorizontal: spacing.md,
+  },
+  onboardingSteps: {
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
+  },
+  onboardingStep: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  onboardingText: {
+    flex: 1,
+    fontSize: fontSize.sm,
+    lineHeight: 20,
   },
 });

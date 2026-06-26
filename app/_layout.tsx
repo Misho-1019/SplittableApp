@@ -5,6 +5,7 @@ import { StyleSheet } from 'react-native';
 import { AuthProvider } from '@/context/AuthContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { ToastProvider } from '@/context/ToastContext';
+import { PreferencesProvider } from '@/context/PreferencesContext';
 
 export default function RootLayout() {
   return (
@@ -12,12 +13,14 @@ export default function RootLayout() {
       <AuthProvider>
         <ThemeProvider>
           <ToastProvider>
-            <StatusBar style="auto" />
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="index" />
-              <Stack.Screen name="(auth)" />
-              <Stack.Screen name="(tabs)" />
-            </Stack>
+            <PreferencesProvider>
+              <StatusBar style="auto" />
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="index" />
+                <Stack.Screen name="(auth)" />
+                <Stack.Screen name="(tabs)" />
+              </Stack>
+            </PreferencesProvider>
           </ToastProvider>
         </ThemeProvider>
       </AuthProvider>
