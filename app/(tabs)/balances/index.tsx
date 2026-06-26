@@ -12,15 +12,14 @@ import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { Divider } from '@/components/shared/Divider';
 import {
-  getOwedToUser,
-  getUserOwes,
   getOverallNetBalance,
+  getUserInvolvedBalances,
 } from '@/utils/calculateBalances';
 import type { BalanceFromPerspective } from '@/utils/calculateBalances';
 import { useTheme } from '@/context/ThemeContext';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/config/theme';
 import type { Settlement } from '@/types';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
 type ListItem =
   | { type: 'divider'; key: string; label: string }
@@ -31,7 +30,7 @@ export default function BalancesListScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { groups } = useGroups(user?.id);
-  const { balances, loading, error, refresh } = useBalances(groups);
+  const { balances, allExpenses, loading, error, refresh } = useBalances(groups);
   const { colors } = useTheme();
   const [settlements, setSettlements] = useState<Settlement[]>([]);
   const [loadingSettlements, setLoadingSettlements] = useState(true);
@@ -59,12 +58,31 @@ export default function BalancesListScreen() {
     loadSettlements();
   }, [loadSettlements]);
 
-  if (!user) return null;
+  const netBalance = getOverallNetBalance(balances, user?.id ?? '');
 
-  const netBalance = getOverallNetBalance(balances, user.id);
-  const owedToYou = getOwedToUser(balances, user.id);
-  const youOwe = getUserOwes(balances, user.id);
-  const hasAnyBalances = owedToYou.length > 0 || youOwe.length > 0;
+  const userBalances = useMemo(() => {
+    if (!user || !groups || groups.length === 0) return [];
+    const result: BalanceFromPerspective[] = [];
+    for (const group of groups) {
+      const groupExpenses = allExpenses.filter((e) => e.groupId === group.id);
+      const groupSettlements = settlements.filter((s) => s.groupId === group.id);
+      const pairBalances = getUserInvolvedBalances(
+        groupExpenses,
+        group.id,
+        group.name,
+        'USD',
+        group.members.map((id) => ({ id, displayName: group.memberNames[id] ?? id })),
+        user.id,
+        groupSettlements,
+      );
+      result.push(...pairBalances);
+    }
+    return result;
+  }, [groups, allExpenses, settlements, user?.id]);
+
+  const owedToYou = userBalances.filter((b: BalanceFromPerspective) => b.direction === 'receive');
+  const youOwe = userBalances.filter((b: BalanceFromPerspective) => b.direction === 'pay');
+  const hasAnyBalances = userBalances.length > 0;
 
   const handleSettleUp = (item: BalanceFromPerspective) => {
     router.push({
@@ -115,6 +133,8 @@ export default function BalancesListScreen() {
       settlement: s,
     })),
   ];
+
+  if (!user) return null;
 
   if (loading && balances.length === 0) {
     return (

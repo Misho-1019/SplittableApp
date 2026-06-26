@@ -5,14 +5,17 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
 import { useExpenses } from '@/hooks/useExpenses';
-import { getGroup } from '@/services/groups.service';
+import { getGroup, removeMemberFromGroup } from '@/services/groups.service';
 import { getUsers } from '@/services/users.service';
 import { getSettlementsBetweenUsers } from '@/services/settlements.service';
+import { collection, getDocs, orderBy, query } from 'firebase/firestore';
+import { db } from '@/config/firebase';
 import { MemberChip } from '@/components/groups/MemberChip';
 import { ExpenseCard } from '@/components/expenses/ExpenseCard';
 import { Card } from '@/components/shared/Card';
@@ -25,8 +28,8 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { Divider } from '@/components/shared/Divider';
 import { useTheme } from '@/context/ThemeContext';
 import { fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
-import type { Group, User } from '@/types';
-import { calculateGroupBalances, getBalancesFromPerspective } from '@/utils/calculateBalances';
+import type { Group, User, Settlement } from '@/types';
+import { getUserInvolvedBalances } from '@/utils/calculateBalances';
 
 export default function GroupDetailScreen() {
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
@@ -38,6 +41,7 @@ export default function GroupDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [settlementStatuses, setSettlementStatuses] = useState<Record<string, 'none' | 'pending' | 'completed'>>({});
+  const [settlements, setSettlements] = useState<Settlement[]>([]);
   const { colors } = useTheme();
 
   useEffect(() => {
@@ -84,6 +88,20 @@ export default function GroupDetailScreen() {
           }
           if (!cancelled) setSettlementStatuses(statuses);
         }
+
+        // Fetch all settlements for balance adjustment
+        const settlementsSnap = await getDocs(
+          query(
+            collection(db, 'groups', groupId, 'settlements'),
+            orderBy('createdAt', 'desc'),
+          ),
+        );
+        const fetchedSettlements: Settlement[] = settlementsSnap.docs.map((d) => ({
+          id: d.id,
+          groupId,
+          ...d.data(),
+        })) as Settlement[];
+        if (!cancelled) setSettlements(fetchedSettlements);
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Failed to load group.');
@@ -99,21 +117,28 @@ export default function GroupDetailScreen() {
 
   const { expenses } = useExpenses(groupId ?? undefined);
 
-  const balances = useMemo(() => {
+  const userBalances = useMemo(() => {
     if (!group || members.length === 0) return [];
-    return calculateGroupBalances(
+    return getUserInvolvedBalances(
       expenses,
       group.id,
       group.name,
       'USD',
       members.map((m) => ({ id: m.id, displayName: m.displayName })),
+      user?.id ?? '',
+      settlements,
     );
-  }, [expenses, group, members]);
+  }, [expenses, group, members, user?.id, settlements]);
 
-  const currentUserBalance = useMemo(
-    () => balances.find((b) => b.userId === user?.id),
-    [balances, user?.id],
-  );
+  const userNetBalance = useMemo(() => {
+    const owed = userBalances
+      .filter((b) => b.direction === 'receive')
+      .reduce((s, b) => s + b.amount, 0);
+    const owes = userBalances
+      .filter((b) => b.direction === 'pay')
+      .reduce((s, b) => s + b.amount, 0);
+    return owed - owes;
+  }, [userBalances]);
 
   if (loading) return <LoadingSpinner fullScreen />;
 
@@ -160,45 +185,37 @@ export default function GroupDetailScreen() {
           </View>
         </Card>
 
-        {currentUserBalance && Math.abs(currentUserBalance.netBalance) > 0.01 && (
+        {Math.abs(userNetBalance) > 0.01 && (
           <View
             style={[
               styles.balanceBanner,
-              { backgroundColor: currentUserBalance.netBalance > 0 ? colors.successBackground : colors.dangerBackground },
+              { backgroundColor: userNetBalance > 0 ? colors.successBackground : colors.dangerBackground },
             ]}
           >
             <Ionicons
-              name={
-                currentUserBalance.netBalance > 0
-                  ? 'trending-up'
-                  : 'trending-down'
-              }
+              name={userNetBalance > 0 ? 'trending-up' : 'trending-down'}
               size={18}
-              color={
-                currentUserBalance.netBalance > 0
-                  ? colors.success
-                  : colors.danger
-              }
+              color={userNetBalance > 0 ? colors.success : colors.danger}
             />
             <Text
               style={[
                 styles.balanceText,
-                currentUserBalance.netBalance > 0
+                userNetBalance > 0
                   ? { color: colors.success }
                   : { color: colors.danger },
               ]}
             >
-              {currentUserBalance.netBalance > 0
-                ? `You are owed $${currentUserBalance.netBalance.toFixed(2)}`
-                : `You owe $${Math.abs(currentUserBalance.netBalance).toFixed(2)}`}
+              {userNetBalance > 0
+                ? `You are owed $${userNetBalance.toFixed(2)}`
+                : `You owe $${Math.abs(userNetBalance).toFixed(2)}`}
             </Text>
           </View>
         )}
 
-        {balances.length > 0 && (
+        {userBalances.length > 0 && (
           <View style={styles.balancesList}>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Balances</Text>
-            {getBalancesFromPerspective(balances, user?.id ?? '').map((b) => {
+            {userBalances.map((b) => {
                 const isOwed = b.direction === 'receive';
                 const status = settlementStatuses[b.userId] ?? 'none';
 
@@ -235,10 +252,6 @@ export default function GroupDetailScreen() {
           <ExpenseChart expenses={expenses} />
         )}
 
-        {balances.length > 1 && (
-          <BalanceChart balances={balances} currentUserId={user?.id ?? ''} />
-        )}
-
         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Members</Text>
         <ScrollView
           horizontal
@@ -271,11 +284,42 @@ export default function GroupDetailScreen() {
           )}
         </ScrollView>
 
+        {!isCreator && (
+          <TouchableOpacity
+            style={[styles.leaveButton, { borderColor: colors.danger }]}
+            onPress={() => {
+              Alert.alert(
+                'Leave Group',
+                `Leave "${group.name}"? You can be re-added by the group creator.`,
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Leave',
+                    style: 'destructive',
+                    onPress: async () => {
+                      try {
+                        await removeMemberFromGroup(group.id, user!.id);
+                        router.replace('/(tabs)/groups');
+                      } catch {
+                        Alert.alert('Error', 'Failed to leave group.');
+                      }
+                    },
+                  },
+                ],
+              );
+            }}
+          >
+            <Ionicons name="exit-outline" size={20} color={colors.danger} />
+            <Text style={[styles.leaveText, { color: colors.danger }]}>Leave Group</Text>
+          </TouchableOpacity>
+        )}
+
         <Divider label="Expenses" />
 
-        <ExpenseList
-          groupId={group.id}
-          onAddExpense={() =>
+          <ExpenseList
+            groupId={group.id}
+            userId={user?.id ?? ''}
+            onAddExpense={() =>
             router.push({
               pathname: '/(tabs)/groups/[groupId]/add-expense',
               params: { groupId: group.id },
@@ -308,20 +352,30 @@ export default function GroupDetailScreen() {
 
 function ExpenseList({
   groupId,
+  userId,
   onAddExpense,
   onExpensePress,
 }: {
   groupId: string;
+  userId: string;
   onAddExpense: () => void;
   onExpensePress: (expenseId: string) => void;
 }) {
   const { expenses, loading } = useExpenses(groupId);
 
-  if (loading && expenses.length === 0) {
+  const userExpenses = userId
+    ? expenses.filter(
+        (e) =>
+          e.paidBy === userId ||
+          e.splitDetails.some((s) => s.userId === userId),
+      )
+    : expenses;
+
+  if (loading && userExpenses.length === 0) {
     return <LoadingSpinner />;
   }
 
-  if (expenses.length === 0) {
+  if (userExpenses.length === 0) {
     return (
       <EmptyState
         icon="receipt-outline"
@@ -335,7 +389,7 @@ function ExpenseList({
 
   return (
     <View style={{ gap: spacing.sm }}>
-      {expenses.map((expense) => (
+      {userExpenses.map((expense) => (
         <ExpenseCard
           key={expense.id}
           expense={expense}
@@ -459,5 +513,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowRadius: 8,
     elevation: 8,
+  },
+  leaveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm + 4,
+    borderWidth: 1.5,
+    borderRadius: borderRadius.md,
+    marginTop: spacing.sm,
+  },
+  leaveText: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
   },
 });

@@ -6,6 +6,7 @@ import type { Balance, Expense, Group, Settlement } from '@/types';
 
 export function useBalances(userGroups: Group[] | undefined) {
   const [balances, setBalances] = useState<Balance[]>([]);
+  const [allExpenses, setAllExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -26,6 +27,7 @@ export function useBalances(userGroups: Group[] | undefined) {
 
     try {
       const allBalances: Balance[] = [];
+      const allExpenses: Expense[] = [];
 
       for (const group of userGroups) {
         const expensesRef = collection(db, 'groups', group.id, 'expenses');
@@ -37,6 +39,8 @@ export function useBalances(userGroups: Group[] | undefined) {
           groupId: group.id,
           ...d.data(),
         })) as Expense[];
+
+        allExpenses.push(...expenses);
 
         const members = group.members.map((id) => ({
           id,
@@ -70,6 +74,7 @@ export function useBalances(userGroups: Group[] | undefined) {
       }
 
       setBalances(allBalances);
+      setAllExpenses(allExpenses);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to load balances'));
     } finally {
@@ -81,5 +86,5 @@ export function useBalances(userGroups: Group[] | undefined) {
     refresh();
   }, [refresh]);
 
-  return { balances, loading, error, refresh };
+  return { balances, allExpenses, loading, error, refresh };
 }

@@ -56,6 +56,7 @@ export default function AddExpenseScreen() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [showDiscardModal, setShowDiscardModal] = useState(false);
+  const [selectedMembers, setSelectedMembers] = useState<Set<string>>(new Set());
   const { image: receiptUri, pickFromCamera, pickFromGallery, removeImage: removeReceipt } = useImagePicker({ quality: 0.7 });
 
   const paidByUser = members.find((m) => m.id === paidBy);
@@ -94,6 +95,7 @@ export default function AddExpenseScreen() {
       const userDocs = await getUsers(fetched.members);
       if (cancelled) return;
       setMembers(userDocs);
+      setSelectedMembers(new Set(fetched.members));
       const initialPercent = Math.floor(100 / fetched.members.length);
       const pcts: Record<string, number> = {};
       const shares: Record<string, string> = {};
@@ -129,27 +131,30 @@ export default function AddExpenseScreen() {
   }, [splitType]);
 
   const splitData = useMemo(() => {
+    const selected = members.filter((m) => selectedMembers.has(m.id) || m.id === paidBy);
+    if (selected.length === 0) return [];
+
     if (splitType === 'equal') {
-      return members.map((m) => ({
+      return selected.map((m) => ({
         userId: m.id,
         displayName: m.displayName,
-        share: members.length > 0 ? amountNum / members.length : 0,
+        share: amountNum / selected.length,
       }));
     }
     if (splitType === 'percentage') {
-      return members.map((m) => ({
+      return selected.map((m) => ({
         userId: m.id,
         displayName: m.displayName,
         share: (percentages[m.id] ?? 0) / 100 * amountNum,
         percentage: percentages[m.id] ?? 0,
       }));
     }
-    return members.map((m) => ({
+    return selected.map((m) => ({
       userId: m.id,
       displayName: m.displayName,
       share: parseFloat(customShares[m.id] ?? '0') || 0,
     }));
-  }, [splitType, members, amountNum, percentages, customShares]);
+  }, [splitType, members, selectedMembers, paidBy, amountNum, percentages, customShares]);
 
   const canSave = useMemo(() => {
     if (!description.trim() || !amountNum || amountNum <= 0 || !paidBy) return false;
@@ -212,7 +217,8 @@ export default function AddExpenseScreen() {
             receiptPhotoURL: downloadURL,
           });
           expense.receiptPhotoURL = downloadURL;
-        } catch {
+        } catch (error) {
+          console.error('Receipt upload failed:', error);
           toast.showToast('Expense saved but receipt upload failed.', 'info');
         }
       }
@@ -280,11 +286,58 @@ export default function AddExpenseScreen() {
                   ]}
                   numberOfLines={1}
                 >
-                  {member.displayName}
-                  {member.id === user?.id ? ' (You)' : ''}
+                  {member.id === user?.id ? 'You' : member.displayName}
                 </Text>
               </TouchableOpacity>
             ))}
+          </ScrollView>
+
+          <Text style={[styles.label, { color: colors.textSecondary }]}>Split with</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={styles.payerRow}>
+            {members.map((member) => {
+              const isSelected = selectedMembers.has(member.id) || member.id === paidBy;
+              return (
+                <TouchableOpacity
+                  key={member.id}
+                  style={[
+                    styles.splitChip,
+                    { borderColor: colors.border, backgroundColor: colors.surface },
+                    isSelected && {
+                      borderColor: colors.primary,
+                      backgroundColor: colors.primaryBackground,
+                    },
+                    member.id === paidBy && {
+                      borderColor: colors.primary,
+                      backgroundColor: colors.primaryBackground,
+                    },
+                  ]}
+                  onPress={() => {
+                    if (member.id === paidBy) return;
+                    setSelectedMembers((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(member.id)) {
+                        next.delete(member.id);
+                      } else {
+                        next.add(member.id);
+                      }
+                      return next;
+                    });
+                  }}
+                >
+                  <Avatar name={member.displayName} size="md" />
+                  <Text
+                    style={[
+                      styles.splitChipName,
+                      { color: colors.textMuted },
+                      isSelected && { color: colors.primary },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {member.id === user?.id ? 'You' : member.displayName}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </ScrollView>
 
           <Text style={[styles.label, { color: colors.textSecondary }]}>Split Type</Text>
@@ -293,7 +346,7 @@ export default function AddExpenseScreen() {
           {splitType === 'equal' && (
             <EqualSplit
               amount={amountNum}
-              members={members.map((m) => ({
+              members={members.filter((m) => selectedMembers.has(m.id) || m.id === paidBy).map((m) => ({
                 id: m.id,
                 displayName: m.displayName,
               }))}
@@ -302,7 +355,7 @@ export default function AddExpenseScreen() {
 
           {splitType === 'percentage' && (
             <PercentageSplit
-              members={members.map((m) => ({
+              members={members.filter((m) => selectedMembers.has(m.id) || m.id === paidBy).map((m) => ({
                 id: m.id,
                 displayName: m.displayName,
                 percentage: percentages[m.id] ?? 0,
@@ -313,7 +366,7 @@ export default function AddExpenseScreen() {
 
           {splitType === 'custom' && (
             <CustomSplit
-              members={members.map((m) => ({
+              members={members.filter((m) => selectedMembers.has(m.id) || m.id === paidBy).map((m) => ({
                 id: m.id,
                 displayName: m.displayName,
                 share: customShares[m.id] ?? '',
@@ -405,5 +458,19 @@ const styles = StyleSheet.create({
   receiptButtonText: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
+  },
+  splitChip: {
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm + 4,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1.5,
+    width: 80,
+  },
+  splitChipName: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.medium,
+    textAlign: 'center',
   },
 });

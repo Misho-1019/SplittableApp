@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View, Text, Image, ScrollView, StyleSheet, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
@@ -148,9 +148,12 @@ export default function ExpenseDetailScreen() {
         {expense.receiptPhotoURL && (
           <>
             <Divider label="Receipt" />
-            <Card padded={false} style={styles.receiptPlaceholder}>
-              <Ionicons name="image-outline" size={48} color={colors.textMuted} />
-              <Text style={[styles.receiptText, { color: colors.textMuted }]}>Receipt attached</Text>
+            <Card padded={false} style={styles.receiptContainer}>
+              <Image
+                source={{ uri: expense.receiptPhotoURL }}
+                style={styles.receiptImage}
+                resizeMode="contain"
+              />
             </Card>
           </>
         )}
@@ -223,11 +226,12 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
   },
-  receiptPlaceholder: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing.xl,
-    gap: spacing.sm,
+  receiptContainer: {
+    overflow: 'hidden',
+  },
+  receiptImage: {
+    width: '100%',
+    height: 240,
   },
   receiptText: {
     fontSize: fontSize.sm,

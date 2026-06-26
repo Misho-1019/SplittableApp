@@ -89,6 +89,72 @@ export function applySettlementsToBalances(
   return result;
 }
 
+/**
+ * Computes per-pair balances for a specific user, considering only expenses
+ * where the user actually participated (as payer or in splitDetails).
+ *
+ * Unlike getBalancesFromPerspective which shows ALL other people's raw
+ * balances interpreted from your perspective, this function only shows
+ * balances from expenses you were actually part of. This prevents new
+ * members from seeing pre-join debts, and users from seeing balances
+ * from expenses they weren't included in.
+ */
+export function getUserInvolvedBalances(
+  expenses: Expense[],
+  groupId: string,
+  groupName: string,
+  currency: string,
+  members: { id: string; displayName: string }[],
+  currentUserId: string,
+  settlements?: Settlement[],
+): BalanceFromPerspective[] {
+  const involvedExpenses = expenses.filter(
+    (e) =>
+      e.paidBy === currentUserId ||
+      e.splitDetails.some((s) => s.userId === currentUserId),
+  );
+
+  if (involvedExpenses.length === 0) return [];
+
+  let balances = calculateGroupBalances(
+    involvedExpenses,
+    groupId,
+    groupName,
+    currency,
+    members,
+  );
+
+  if (settlements) {
+    const relevantSettlements = settlements.filter(
+      (s) =>
+        s.status === 'completed' &&
+        (s.fromUserId === currentUserId || s.toUserId === currentUserId),
+    );
+    balances = applySettlementsToBalances(balances, relevantSettlements);
+  }
+
+  return balances
+    .filter(
+      (b) =>
+        b.userId !== currentUserId &&
+        Math.abs(b.netBalance) > 0.01 &&
+        involvedExpenses.some(
+          (e) =>
+            (e.paidBy === b.userId || e.splitDetails.some((s) => s.userId === b.userId)) &&
+            (e.paidBy === currentUserId || e.splitDetails.some((s) => s.userId === currentUserId)),
+        ),
+    )
+    .map((b) => ({
+      userId: b.userId,
+      displayName: b.displayName,
+      groupId: b.groupId,
+      groupName: b.groupName,
+      currency: b.currency,
+      direction: b.netBalance < 0 ? 'receive' as const : 'pay' as const,
+      amount: Math.abs(b.netBalance),
+    }));
+}
+
 // ---------------------------------------------------------------------------
 // Perspective-aware helpers
 // ---------------------------------------------------------------------------
@@ -117,10 +183,26 @@ export interface BalanceFromPerspective {
 export function getBalancesFromPerspective(
   balances: Balance[],
   currentUserId: string,
+  expenses?: Expense[],
 ): BalanceFromPerspective[] {
+  const involvedGroups = expenses
+    ? new Set(
+        expenses
+          .filter(
+            (e) =>
+              e.paidBy === currentUserId ||
+              e.splitDetails.some((s) => s.userId === currentUserId),
+          )
+          .map((e) => e.groupId),
+      )
+    : null;
+
   return balances
     .filter(
-      (b) => b.userId !== currentUserId && Math.abs(b.netBalance) > 0.01,
+      (b) =>
+        b.userId !== currentUserId &&
+        Math.abs(b.netBalance) > 0.01 &&
+        (!involvedGroups || involvedGroups.has(b.groupId)),
     )
     .map((b) => {
       // If the other person's netBalance is NEGATIVE they underpaid →
@@ -148,20 +230,19 @@ export function getBalancesFromPerspective(
 export function getOwedToUser(
   balances: Balance[],
   userId: string,
+  expenses?: Expense[],
 ): BalanceFromPerspective[] {
-  return getBalancesFromPerspective(balances, userId).filter(
+  return getBalancesFromPerspective(balances, userId, expenses).filter(
     (b) => b.direction === 'receive',
   );
 }
 
-/**
- * Shortcut: balances where the current user should PAY money.
- */
 export function getUserOwes(
   balances: Balance[],
   userId: string,
+  expenses?: Expense[],
 ): BalanceFromPerspective[] {
-  return getBalancesFromPerspective(balances, userId).filter(
+  return getBalancesFromPerspective(balances, userId, expenses).filter(
     (b) => b.direction === 'pay',
   );
 }

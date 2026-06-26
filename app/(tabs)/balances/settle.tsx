@@ -133,8 +133,7 @@ export default function SettleUpScreen() {
     );
   }
 
-  if (existingSettlement) {
-    const isComplete = existingSettlement.status === 'completed';
+  if (existingSettlement && existingSettlement.status === 'pending') {
     const otherName = params.toUserName;
 
     return (
@@ -146,53 +145,42 @@ export default function SettleUpScreen() {
             <View
               style={[
                 styles.iconCircle,
-                { backgroundColor: isComplete ? colors.success : colors.warning },
+                { backgroundColor: colors.warning },
               ]}
             >
-              <Ionicons
-                name={isComplete ? 'checkmark' : 'time'}
-                size={36}
-                color={colors.textInverse}
-              />
+              <Ionicons name="time" size={36} color={colors.textInverse} />
             </View>
             <Text style={[styles.statusTitle, { color: colors.textPrimary }]}>
-              {isComplete ? 'Already Settled' : 'Payment Pending'}
+              Payment Pending
             </Text>
             <Text style={[styles.statusMessage, { color: colors.textSecondary }]}>
-              {isComplete
-                ? `You ${isReceiving ? 'received' : 'paid'} $${amount.toFixed(2)} ${isReceiving ? 'from' : 'to'} ${otherName}.`
-                : `Awaiting $${amount.toFixed(2)} from ${otherName}.`}
+              Awaiting ${amount.toFixed(2)} from {otherName}.
             </Text>
             {existingSettlement.createdAt && (
               <Text style={[styles.statusDate, { color: colors.textMuted }]}>
                 {formatRelativeDate(existingSettlement.createdAt)}
               </Text>
             )}
-            <Badge
-              variant={isComplete ? 'completed' : 'pending'}
-              label={existingSettlement.status}
-            />
+            <Badge variant="pending" label="pending" />
           </View>
 
-          {!isComplete && (
-            <Button
-              title="Mark as Completed"
-              onPress={async () => {
-                try {
-                  await updateSettlementStatus(
-                    params.groupId,
-                    existingSettlement.id,
-                    'completed',
-                  );
-                  toast.showToast('Payment marked as completed!', 'success');
-                  setTimeout(() => router.replace('/(tabs)/balances'), 300);
-                } catch {
-                  toast.showToast('Failed to update settlement.', 'error');
-                }
-              }}
-              variant="primary"
-            />
-          )}
+          <Button
+            title="Mark as Completed"
+            onPress={async () => {
+              try {
+                await updateSettlementStatus(
+                  params.groupId,
+                  existingSettlement.id,
+                  'completed',
+                );
+                toast.showToast('Payment marked as completed!', 'success');
+                setTimeout(() => router.replace('/(tabs)/balances'), 300);
+              } catch {
+                toast.showToast('Failed to update settlement.', 'error');
+              }
+            }}
+            variant="primary"
+          />
 
           <Button
             title="Back to Balances"

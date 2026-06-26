@@ -74,7 +74,7 @@ export default function GroupListScreen() {
               <GroupCard
                 group={item}
                 onPress={() => router.push({ pathname: '/(tabs)/groups/[groupId]', params: { groupId: item.id } })}
-                onDelete={() => setDeleteTarget(item.id)}
+                onDelete={item.createdBy === user?.id ? () => setDeleteTarget(item.id) : undefined}
               />
           )}
           refreshControl={
