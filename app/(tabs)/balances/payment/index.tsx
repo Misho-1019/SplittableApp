@@ -11,6 +11,7 @@ import { AnimatedCheckmark } from '@/components/shared/AnimatedCheckmark';
 import { Badge } from '@/components/shared/Badge';
 import { Button } from '@/components/shared/Button';
 import { Header } from '@/components/shared/Header';
+import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useTheme } from '@/context/ThemeContext';
 import { fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
 
@@ -75,7 +76,7 @@ export default function PaymentScreen() {
     }
   };
 
-  if (!user) return null;
+  if (!user) return <LoadingSpinner fullScreen />;
 
   const renderStatus = () => {
     if (state === 'processing') {

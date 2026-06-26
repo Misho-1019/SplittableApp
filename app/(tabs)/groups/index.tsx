@@ -30,7 +30,7 @@ export default function GroupListScreen() {
     }
   };
 
-  if (!user) return null;
+  if (!user) return <LoadingSpinner fullScreen />;
 
   return (
     <>

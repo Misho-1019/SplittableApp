@@ -91,7 +91,7 @@ export default function AddGroupScreen() {
     return () => subscription.remove();
   }, [isDirty]);
 
-  if (!user) return null;
+  if (!user) return <LoadingSpinner fullScreen />;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>

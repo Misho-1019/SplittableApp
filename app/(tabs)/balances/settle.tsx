@@ -122,7 +122,7 @@ export default function SettleUpScreen() {
     }
   };
 
-  if (!user) return null;
+  if (!user) return <LoadingSpinner fullScreen />;
 
   if (checkingSettlement) {
     return (

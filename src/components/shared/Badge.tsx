@@ -18,7 +18,7 @@ export function Badge({ label, variant = 'info' }: BadgeProps) {
     processing: { bg: colors.infoBackground, text: colors.info },
     completed: { bg: colors.successBackground, text: colors.success },
     failed: { bg: colors.dangerBackground, text: colors.danger },
-    info: { bg: '#F3E5F5', text: colors.primary },
+    info: { bg: colors.primaryBackground, text: colors.primary },
   };
 
   const style = variantStyles[variant];

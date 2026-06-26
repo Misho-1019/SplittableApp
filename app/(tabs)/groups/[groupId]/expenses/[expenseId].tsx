@@ -8,6 +8,7 @@ import { Card } from '@/components/shared/Card';
 import { Badge } from '@/components/shared/Badge';
 import { Avatar } from '@/components/shared/Avatar';
 import { Header } from '@/components/shared/Header';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Button } from '@/components/shared/Button';
 import { Divider } from '@/components/shared/Divider';
@@ -79,7 +80,7 @@ export default function ExpenseDetailScreen() {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Header title="Expense" onBack={() => router.back()} />
-        <Text style={[styles.notFound, { color: colors.textMuted }]}>Expense not found.</Text>
+        <EmptyState icon="alert-circle-outline" title="Not Found" message="Expense not found." actionLabel="Go Back" onAction={() => router.back()} />
       </View>
     );
   }

@@ -5,6 +5,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useGroups } from '@/hooks/useGroups';
 import { useTheme } from '@/context/ThemeContext';
 import { Header } from '@/components/shared/Header';
+import { Avatar } from '@/components/shared/Avatar';
+import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { ConfirmModal } from '@/components/shared/ConfirmModal';
 import { fontSize, fontWeight, spacing, borderRadius, currencies } from '@/config/theme';
 import type { CurrencyCode } from '@/config/theme';
@@ -36,7 +38,7 @@ export default function SettingsScreen() {
     }
   };
 
-  if (!user) return null;
+  if (!user) return <LoadingSpinner fullScreen />;
 
   const handleLogout = async () => {
     setShowLogout(false);
@@ -57,11 +59,7 @@ export default function SettingsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <View style={[styles.avatarCircle, { backgroundColor: colors.primary }]}>
-            <Text style={[styles.avatarText, { color: colors.textInverse }]}>
-              {user.displayName?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || '?'}
-            </Text>
-          </View>
+          <Avatar name={user.displayName} photoURL={user.photoURL} size="xl" />
           <View style={styles.profileInfo}>
             <Text style={[styles.profileName, { color: colors.textPrimary }]}>
               {user.displayName}

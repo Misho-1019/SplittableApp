@@ -91,7 +91,7 @@ export default function AddExpenseScreen() {
       const fetched = await getGroup(groupId);
       if (cancelled || !fetched) return;
       setGroup(fetched);
-      setPaidBy(fetched.members[0]);
+      setPaidBy(user?.id ?? fetched.members[0]);
       const userDocs = await getUsers(fetched.members);
       if (cancelled) return;
       setMembers(userDocs);
@@ -217,13 +217,14 @@ export default function AddExpenseScreen() {
             receiptPhotoURL: downloadURL,
           });
           expense.receiptPhotoURL = downloadURL;
+          toast.showToast('Expense saved successfully!', 'success');
         } catch (error) {
           console.error('Receipt upload failed:', error);
           toast.showToast('Expense saved but receipt upload failed.', 'info');
         }
+      } else {
+        toast.showToast('Expense saved successfully!', 'success');
       }
-
-      toast.showToast('Expense saved successfully!', 'success');
       setTimeout(() => router.back(), 400);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save expense.');

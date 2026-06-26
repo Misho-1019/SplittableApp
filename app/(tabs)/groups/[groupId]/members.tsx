@@ -16,6 +16,7 @@ import { getUsers, searchUserByEmail } from '@/services/users.service';
 import { Avatar } from '@/components/shared/Avatar';
 import { Card } from '@/components/shared/Card';
 import { Header } from '@/components/shared/Header';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useTheme } from '@/context/ThemeContext';
 import { fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
@@ -150,7 +151,7 @@ export default function ManageMembersScreen() {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Header title="Members" onBack={() => router.back()} />
-        <Text style={[styles.notFound, { color: colors.textMuted }]}>Group not found.</Text>
+        <EmptyState icon="alert-circle-outline" title="Not Found" message="Group not found." actionLabel="Go Back" onAction={() => router.back()} />
       </View>
     );
   }

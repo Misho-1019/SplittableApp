@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Avatar } from '@/components/shared/Avatar';
 import { useTheme } from '@/context/ThemeContext';
-import { fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
+import { fontSize, fontWeight, spacing, borderRadius, shadow } from '@/config/theme';
 import type { BalanceDirection } from '@/utils/calculateBalances';
 
 interface BalanceRowProps {
@@ -80,6 +80,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     gap: spacing.sm,
     borderWidth: 1,
+    ...shadow.sm,
   },
   info: {
     flex: 1,
