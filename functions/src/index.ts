@@ -54,6 +54,10 @@ export const createpaymentintent = onCall(
       throw new HttpsError('permission-denied', 'Not a group member.');
     }
 
+    if (!groupData.members?.includes(otherUserId)) {
+      throw new HttpsError('permission-denied', 'Recipient is not a group member.');
+    }
+
     const paymentIntent = await getStripe().paymentIntents.create({
       amount,
       currency: (currency ?? 'usd').toLowerCase(),

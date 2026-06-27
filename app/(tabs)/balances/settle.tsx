@@ -16,8 +16,6 @@ import { fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
 import { formatRelativeDate } from '@/utils/dates';
 import type { Settlement } from '@/types';
 
-type PaymentMethod = 'card' | 'cash';
-
 export default function SettleUpScreen() {
   const params = useLocalSearchParams<{
     groupId: string;
@@ -31,43 +29,15 @@ export default function SettleUpScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const toast = useToast();
-
-  const [method, setMethod] = useState<PaymentMethod>('cash');
-  const [saving, setSaving] = useState(false);
-  const [savingAction, setSavingAction] = useState<string | null>(null);
-  const [existingSettlement, setExistingSettlement] = useState<Settlement | null>(null);
-  const [checkingSettlement, setCheckingSettlement] = useState(true);
   const { colors } = useTheme();
 
   const amount = parseFloat(params.amount ?? '0') || 0;
   const isReceiving = params.direction === 'receive';
 
-  useEffect(() => {
-    if (!user?.id || !params.groupId || !params.toUserId) return;
-
-    async function check() {
-      try {
-        const settlements = await getSettlementsBetweenUsers(
-          params.groupId,
-          user!.id,
-          params.toUserId,
-        );
-        // Only consider settlements going in the same direction
-        const relevant = settlements.find((s) => {
-          if (isReceiving) {
-            return s.fromUserId === params.toUserId && s.toUserId === user!.id;
-          }
-          return s.fromUserId === user!.id && s.toUserId === params.toUserId;
-        });
-        setExistingSettlement(relevant ?? null);
-      } finally {
-        setCheckingSettlement(false);
-      }
-    }
-
-    check();
-  }, [params.groupId, params.toUserId, user?.id]);
-
+  const [saving, setSaving] = useState(false);
+  const [savingAction, setSavingAction] = useState<string | null>(null);
+  const [existingSettlement, setExistingSettlement] = useState<Settlement | null>(null);
+  const [checkingSettlement, setCheckingSettlement] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalConfig, setModalConfig] = useState({ title: '', message: '' });
   const [pendingStatus, setPendingStatus] = useState<Settlement['status']>('completed');

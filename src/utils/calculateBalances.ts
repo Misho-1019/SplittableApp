@@ -53,10 +53,6 @@ export function calculateGroupBalances(
   return Array.from(balanceMap.values());
 }
 
-export function getNonZeroBalances(balances: Balance[]): Balance[] {
-  return balances.filter((b) => Math.abs(b.netBalance) > 0.01);
-}
-
 /**
  * Adjusts net balances to reflect completed settlements.
  *
@@ -146,14 +142,12 @@ export function getUserInvolvedBalances(
       if (s.fromUserId !== currentUserId && s.toUserId !== currentUserId) continue;
 
       if (s.toUserId === currentUserId) {
-        // currentUser received money → other person's debt to user is reduced
         pairBalances.set(
           s.fromUserId,
           Math.round(((pairBalances.get(s.fromUserId) ?? 0) - s.amount) * 100) / 100,
         );
       }
       if (s.fromUserId === currentUserId) {
-        // currentUser paid money → user's debt to other person is reduced
         pairBalances.set(
           s.toUserId,
           Math.round(((pairBalances.get(s.toUserId) ?? 0) + s.amount) * 100) / 100,
@@ -283,55 +277,4 @@ export function getOverallNetBalance(
   return balances
     .filter((b) => b.userId === userId)
     .reduce((sum, b) => sum + b.netBalance, 0);
-}
-
-// ---------------------------------------------------------------------------
-// Settlement suggestions
-// ---------------------------------------------------------------------------
-
-export interface SettlementSuggestion {
-  from: { userId: string; displayName: string };
-  to: { userId: string; displayName: string };
-  amount: number;
-}
-
-/**
- * Greedy settlement matching: sorts net creditors descending and
- * net debtors ascending, then pairs them until all debts are matched.
- */
-export function getSettlementSuggestions(
-  balances: Balance[],
-): SettlementSuggestion[] {
-  const suggestions: SettlementSuggestion[] = [];
-
-  const creditors = balances
-    .filter((b) => b.netBalance > 0.01)
-    .sort((a, b) => b.netBalance - a.netBalance)
-    .map((b) => ({ ...b }));
-
-  const debtors = balances
-    .filter((b) => b.netBalance < -0.01)
-    .sort((a, b) => a.netBalance - b.netBalance)
-    .map((b) => ({ ...b }));
-
-  for (const debtor of debtors) {
-    let owed = Math.abs(debtor.netBalance);
-
-    for (const creditor of creditors) {
-      if (owed < 0.01 || creditor.netBalance < 0.01) continue;
-
-      const amount = Math.min(owed, creditor.netBalance);
-
-      suggestions.push({
-        from: { userId: debtor.userId, displayName: debtor.displayName },
-        to: { userId: creditor.userId, displayName: creditor.displayName },
-        amount: Math.round(amount * 100) / 100,
-      });
-
-      creditor.netBalance -= amount;
-      owed -= amount;
-    }
-  }
-
-  return suggestions;
 }

@@ -8,6 +8,7 @@ import {
   orderBy,
   onSnapshot,
   getDocs,
+  runTransaction,
   serverTimestamp,
   Timestamp,
 } from 'firebase/firestore';
@@ -40,6 +41,25 @@ export async function createSettlement(
   groupId: string,
   data: Omit<Settlement, 'id' | 'groupId' | 'createdAt' | 'completedAt'>,
 ): Promise<Settlement> {
+  // Check for existing settlement between the same pair (prevents duplicates)
+  const existingQuery = query(
+    collection(db, 'groups', groupId, 'settlements'),
+    orderBy('createdAt', 'desc'),
+  );
+  const existingSnap = await getDocs(existingQuery);
+  const hasExisting = existingSnap.docs.some((d) => {
+    const s = d.data();
+    return (
+      s.status !== 'failed' &&
+      ((s.fromUserId === data.fromUserId && s.toUserId === data.toUserId) ||
+       (s.fromUserId === data.toUserId && s.toUserId === data.fromUserId))
+    );
+  });
+
+  if (hasExisting) {
+    throw new Error('A settlement already exists between these users. Please complete or cancel it first.');
+  }
+
   const ref = doc(collection(db, 'groups', groupId, 'settlements'));
 
   const settlement: Omit<Settlement, 'createdAt' | 'completedAt'> = {

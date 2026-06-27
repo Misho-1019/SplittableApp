@@ -3,10 +3,7 @@ import {
   doc,
   getDoc,
   setDoc,
-  deleteDoc,
-  updateDoc,
   runTransaction,
-  increment,
   query,
   orderBy,
   onSnapshot,
@@ -44,19 +41,12 @@ export async function createExpense(
   data: Omit<Expense, 'id' | 'groupId' | 'createdAt'>,
 ): Promise<Expense> {
   const ref = doc(collection(db, 'groups', groupId, 'expenses'));
-  const groupRef = doc(db, 'groups', groupId);
 
-  await runTransaction(db, async (transaction) => {
-    transaction.set(ref, {
-      ...data,
-      id: ref.id,
-      groupId,
-      createdAt: serverTimestamp(),
-    });
-    transaction.update(groupRef, {
-      totalExpenses: increment(data.amount),
-      updatedAt: serverTimestamp(),
-    });
+  await setDoc(ref, {
+    ...data,
+    id: ref.id,
+    groupId,
+    createdAt: serverTimestamp(),
   });
 
   return {
@@ -104,18 +94,11 @@ export async function deleteExpense(
   groupId: string,
   expenseId: string,
 ): Promise<void> {
-  const expenseRef = doc(db, 'groups', groupId, 'expenses', expenseId);
-  const groupRef = doc(db, 'groups', groupId);
-
   await runTransaction(db, async (transaction) => {
+    const expenseRef = doc(db, 'groups', groupId, 'expenses', expenseId);
     const expenseSnap = await transaction.get(expenseRef);
     if (!expenseSnap.exists()) return;
-
-    const amount = expenseSnap.data().amount as number;
     transaction.delete(expenseRef);
-    transaction.update(groupRef, {
-      totalExpenses: increment(-amount),
-    });
   });
 
   try {
