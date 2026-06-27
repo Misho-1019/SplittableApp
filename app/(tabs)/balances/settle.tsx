@@ -42,6 +42,33 @@ export default function SettleUpScreen() {
   const [modalConfig, setModalConfig] = useState({ title: '', message: '' });
   const [pendingStatus, setPendingStatus] = useState<Settlement['status']>('completed');
 
+  useEffect(() => {
+    if (!user?.id || !params.groupId || !params.toUserId) {
+      setCheckingSettlement(false);
+      return;
+    }
+
+    async function check() {
+      try {
+        const settlements = await getSettlementsBetweenUsers(
+          params.groupId,
+          user!.id,
+          params.toUserId,
+        );
+        const relevant = settlements.find((s) => {
+          if (isReceiving) {
+            return s.fromUserId === params.toUserId && s.toUserId === user!.id;
+          }
+          return s.fromUserId === user!.id && s.toUserId === params.toUserId;
+        });
+        setExistingSettlement(relevant ?? null);
+      } finally {
+        setCheckingSettlement(false);
+      }
+    }
+    check();
+  }, [params.groupId, params.toUserId, user?.id]);
+
   const openConfirm = (
     title: string,
     message: string,
@@ -53,10 +80,12 @@ export default function SettleUpScreen() {
   };
 
   const handleConfirm = async () => {
-    if (!user || !params.groupId || !params.toUserId || amount <= 0) {
-      if (amount <= 0) {
-        toast.showToast('Cannot settle a zero or negative amount.', 'error');
-      }
+    if (!user || !params.groupId || !params.toUserId) {
+      toast.showToast('Missing required information to create settlement.', 'error');
+      return;
+    }
+    if (amount <= 0) {
+      toast.showToast('Cannot settle a zero or negative amount.', 'error');
       return;
     }
 
@@ -76,7 +105,7 @@ export default function SettleUpScreen() {
         toUserId: isReceiving ? user.id : params.toUserId,
         toUserName: isReceiving ? user.displayName : params.toUserName,
         amount,
-        currency: params.currency ?? 'USD',
+        currency: params.currency || 'USD',
         paidVia: 'cash',
         status: pendingStatus,
         stripePaymentIntentId: null,
@@ -153,6 +182,25 @@ export default function SettleUpScreen() {
           />
 
           <Button
+            title="Cancel Settlement"
+            onPress={async () => {
+              try {
+                await updateSettlementStatus(
+                  params.groupId,
+                  existingSettlement.id,
+                  'failed',
+                );
+                toast.showToast('Settlement cancelled.', 'info');
+                setExistingSettlement(null);
+                setCheckingSettlement(false);
+              } catch {
+                toast.showToast('Failed to cancel settlement.', 'error');
+              }
+            }}
+            variant="secondary"
+          />
+
+          <Button
             title="Back to Balances"
             onPress={() => router.replace('/(tabs)/balances')}
             variant="secondary"
@@ -192,7 +240,7 @@ export default function SettleUpScreen() {
           <Text style={[styles.amountValue, { color: colors.textPrimary }]}>
             ${amount.toFixed(2)}
           </Text>
-          <Text style={[styles.amountCurrency, { color: colors.textMuted }]}>{params.currency ?? 'USD'}</Text>
+          <Text style={[styles.amountCurrency, { color: colors.textMuted }]}>{params.currency || 'USD'}</Text>
         </Card>
 
         {isReceiving ? (

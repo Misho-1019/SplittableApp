@@ -123,8 +123,8 @@ export default function ManageMembersScreen() {
         onPress: async () => {
           try {
             await removeMemberFromGroup(group.id, memberId);
-          } catch {
-            Alert.alert('Error', 'Failed to remove member.');
+          } catch (err) {
+            Alert.alert('Error', err instanceof Error ? err.message : 'Failed to remove member.');
             return;
           }
           if (isLeavingGroup) {

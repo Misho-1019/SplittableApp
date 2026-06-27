@@ -29,6 +29,8 @@ export default function GroupListScreen() {
     if (!deleteTarget) return;
     try {
       await deleteGroup(deleteTarget);
+    } catch (err) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to delete group.');
     } finally {
       setDeleteTarget(null);
     }
@@ -104,12 +106,23 @@ export default function GroupListScreen() {
             <Text style={[styles.joinGroupText, { color: colors.primary }]}>Join Group with Code</Text>
           </TouchableOpacity>
         </View>
-      ) : (
+      ) : null}
+
+      {groups.length > 0 && (
         <FlatList
           data={groups}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            <TouchableOpacity
+              style={[styles.joinTopButton, { borderColor: colors.primary }]}
+              onPress={() => setShowJoinModal(true)}
+            >
+              <Ionicons name="enter-outline" size={18} color={colors.primary} />
+              <Text style={[styles.joinTopText, { color: colors.primary }]}>Join Group with Code</Text>
+            </TouchableOpacity>
+          }
           renderItem={({ item }) => (
               <GroupCard
                 group={item}
@@ -283,5 +296,19 @@ const styles = StyleSheet.create({
     fontWeight: fontWeight.medium,
     textAlign: 'center',
     paddingVertical: spacing.sm,
+  },
+  joinTopButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+    borderWidth: 1.5,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.sm,
+  },
+  joinTopText: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
   },
 });

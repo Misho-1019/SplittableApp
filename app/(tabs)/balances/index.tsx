@@ -63,7 +63,7 @@ export default function BalancesListScreen() {
     useCallback(() => {
       refresh();
       loadSettlements();
-    }, []),
+    }, [refresh, loadSettlements]),
   );
 
   const netBalance = getOverallNetBalance(balances, user?.id ?? '');

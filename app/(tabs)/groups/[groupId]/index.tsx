@@ -22,7 +22,6 @@ import { ExpenseCard } from '@/components/expenses/ExpenseCard';
 import { Card } from '@/components/shared/Card';
 import { Badge } from '@/components/shared/Badge';
 import { ExpenseChart } from '@/components/charts/ExpenseChart';
-import { BalanceChart } from '@/components/charts/BalanceChart';
 import { Header } from '@/components/shared/Header';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
@@ -304,8 +303,8 @@ export default function GroupDetailScreen() {
                       try {
                         await removeMemberFromGroup(group.id, user!.id);
                         router.replace('/(tabs)/groups');
-                      } catch {
-                        Alert.alert('Error', 'Failed to leave group.');
+                      } catch (err) {
+                        Alert.alert('Error', err instanceof Error ? err.message : 'Failed to leave group.');
                       }
                     },
                   },

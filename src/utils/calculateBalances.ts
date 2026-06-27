@@ -244,29 +244,6 @@ export function getBalancesFromPerspective(
 }
 
 /**
- * Shortcut: balances where the current user should RECEIVE money.
- */
-export function getOwedToUser(
-  balances: Balance[],
-  userId: string,
-  expenses?: Expense[],
-): BalanceFromPerspective[] {
-  return getBalancesFromPerspective(balances, userId, expenses).filter(
-    (b) => b.direction === 'receive',
-  );
-}
-
-export function getUserOwes(
-  balances: Balance[],
-  userId: string,
-  expenses?: Expense[],
-): BalanceFromPerspective[] {
-  return getBalancesFromPerspective(balances, userId, expenses).filter(
-    (b) => b.direction === 'pay',
-  );
-}
-
-/**
  * Computes the user's overall net position across all groups.
  *
  *   netAggregate > 0  →  The user is owed money overall.
