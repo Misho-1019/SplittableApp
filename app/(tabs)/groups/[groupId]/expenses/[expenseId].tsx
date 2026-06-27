@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { View, Text, Image, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View, Text, Image, ScrollView, StyleSheet, Alert, Modal, TextInput, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
-import { getExpense, deleteExpense } from '@/services/expenses.service';
+import { getExpense, deleteExpense, updateExpense } from '@/services/expenses.service';
 import { Card } from '@/components/shared/Card';
 import { Badge } from '@/components/shared/Badge';
 import { Avatar } from '@/components/shared/Avatar';
@@ -33,6 +33,8 @@ export default function ExpenseDetailScreen() {
 
   const [expense, setExpense] = useState<Expense | null>(null);
   const [loading, setLoading] = useState(true);
+  const [editingDesc, setEditingDesc] = useState(false);
+  const [editDescValue, setEditDescValue] = useState('');
   const { colors } = useTheme();
 
   useEffect(() => {
@@ -119,7 +121,14 @@ export default function ExpenseDetailScreen() {
         <Card>
           <View style={[styles.detailRow, { borderBottomColor: colors.divider }]}>
             <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Description</Text>
-            <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{expense.description}</Text>
+            <View style={styles.detailValueRow}>
+              <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{expense.description}</Text>
+              {isCreator && (
+                <TouchableOpacity onPress={() => { setEditDescValue(expense.description); setEditingDesc(true); }} style={styles.editButton}>
+                  <Ionicons name="pencil-outline" size={16} color={colors.primary} />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
           <View style={[styles.detailRow, { borderBottomColor: colors.divider }]}>
             <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Paid by</Text>
@@ -150,7 +159,59 @@ export default function ExpenseDetailScreen() {
             </Text>
           </Card>
         ))}
+
+        {expense.receiptPhotoURL && (
+          <>
+            <Divider label="Receipt" />
+            <Card padded={false} style={styles.receiptContainer}>
+              <Image
+                source={{ uri: expense.receiptPhotoURL }}
+                style={styles.receiptImage}
+                resizeMode="contain"
+              />
+            </Card>
+          </>
+        )}
       </ScrollView>
+
+      <Modal
+        visible={editingDesc}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setEditingDesc(false)}
+      >
+        <View style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Edit Description</Text>
+            <TextInput
+              style={[styles.modalInput, { borderColor: colors.border, color: colors.textPrimary, backgroundColor: colors.surface }]}
+              value={editDescValue}
+              onChangeText={setEditDescValue}
+              placeholder="Expense description"
+              placeholderTextColor={colors.textMuted}
+            />
+            <View style={styles.modalButtons}>
+              <Button title="Cancel" onPress={() => setEditingDesc(false)} variant="secondary" fullWidth={false} style={styles.modalButton} />
+              <Button
+                title="Save"
+                onPress={async () => {
+                  if (!editDescValue.trim()) return;
+                  try {
+                    await updateExpense(groupId, expense!.id, { description: editDescValue.trim() });
+                    setExpense(prev => prev ? { ...prev, description: editDescValue.trim() } : prev);
+                    setEditingDesc(false);
+                  } catch {
+                    Alert.alert('Error', 'Failed to update description.');
+                  }
+                }}
+                variant="primary"
+                fullWidth={false}
+                style={styles.modalButton}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -228,5 +289,47 @@ const styles = StyleSheet.create({
   },
   receiptText: {
     fontSize: fontSize.sm,
+  },
+  detailValueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  editButton: {
+    padding: spacing.xs,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 360,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  modalTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  modalInput: {
+    borderWidth: 1.5,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 4,
+    fontSize: fontSize.md,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  modalButton: {
+    flex: 1,
   },
 });

@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useGroups } from '@/hooks/useGroups';
 import { useTheme } from '@/context/ThemeContext';
 import { usePreferences } from '@/context/PreferencesContext';
+import { useToast } from '@/context/ToastContext';
 import { Header } from '@/components/shared/Header';
 import { Avatar } from '@/components/shared/Avatar';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -18,6 +19,7 @@ export default function SettingsScreen() {
   const { groups } = useGroups(user?.id);
   const { isDark, toggleDarkMode, colors } = useTheme();
   const { currency, setCurrency } = usePreferences();
+  const toast = useToast();
   const router = useRouter();
   const [showLogout, setShowLogout] = useState(false);
   const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
@@ -47,7 +49,7 @@ export default function SettingsScreen() {
       await logout();
       router.replace('/(auth)/login');
     } catch {
-      // silently fail
+      toast.showToast('Failed to log out. Please try again.', 'error');
     }
   };
 

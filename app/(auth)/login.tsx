@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert, Modal, TextInput, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,7 +9,7 @@ import { forgotPassword } from '@/services/auth.service';
 import { useTheme } from '@/context/ThemeContext';
 import { Button } from '@/components/shared/Button';
 import { Input } from '@/components/shared/Input';
-import { fontSize, spacing } from '@/config/theme';
+import { fontSize, spacing, borderRadius } from '@/config/theme';
 import { getFirebaseErrorMessage } from '@/utils/errors';
 
 const loginSchema = z.object({
@@ -24,6 +24,9 @@ export default function LoginScreen() {
   const { login } = useAuth();
   const { colors } = useTheme();
   const [serverError, setServerError] = useState('');
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [sendingReset, setSendingReset] = useState(false);
 
   const {
     control,
@@ -45,22 +48,22 @@ export default function LoginScreen() {
   };
 
   const handleForgotPassword = () => {
-    Alert.prompt(
-      'Reset Password',
-      'Enter your email address to receive a password reset link.',
-      async (email) => {
-        if (!email) return;
-        try {
-          await forgotPassword(email.trim());
-          Alert.alert('Check Your Email', 'If an account exists for that email, a password reset link has been sent.');
-        } catch {
-          Alert.alert('Error', 'Failed to send reset email. Please try again.');
-        }
-      },
-      'plain-text',
-      '',
-      'email-address',
-    );
+    setResetEmail('');
+    setShowForgotPassword(true);
+  };
+
+  const handleSendReset = async () => {
+    if (!resetEmail.trim()) return;
+    setSendingReset(true);
+    try {
+      await forgotPassword(resetEmail.trim());
+      setShowForgotPassword(false);
+      Alert.alert('Check Your Email', 'If an account exists for that email, a password reset link has been sent.');
+    } catch {
+      Alert.alert('Error', 'Failed to send reset email. Please try again.');
+    } finally {
+      setSendingReset(false);
+    }
   };
 
   return (
@@ -144,6 +147,35 @@ export default function LoginScreen() {
           </View>
         </View>
       </ScrollView>
+
+      <Modal
+        visible={showForgotPassword}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowForgotPassword(false)}
+      >
+        <View style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Reset Password</Text>
+            <Text style={[styles.modalHint, { color: colors.textSecondary }]}>
+              Enter your email to receive a password reset link.
+            </Text>
+            <TextInput
+              style={[styles.modalInput, { borderColor: colors.border, color: colors.textPrimary, backgroundColor: colors.surface }]}
+              value={resetEmail}
+              onChangeText={setResetEmail}
+              placeholder="you@example.com"
+              placeholderTextColor={colors.textMuted}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            <Button title={sendingReset ? 'Sending...' : 'Send Reset Link'} onPress={handleSendReset} disabled={!resetEmail.trim() || sendingReset} />
+            <TouchableOpacity onPress={() => setShowForgotPassword(false)}>
+              <Text style={[styles.modalCancel, { color: colors.textMuted }]}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -195,5 +227,40 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     textAlign: 'right',
     marginTop: -spacing.xs,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 360,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  modalTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  modalHint: {
+    fontSize: fontSize.sm,
+    textAlign: 'center',
+  },
+  modalInput: {
+    borderWidth: 1.5,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 4,
+    fontSize: fontSize.md,
+  },
+  modalCancel: {
+    fontSize: fontSize.sm,
+    fontWeight: '500',
+    textAlign: 'center',
+    paddingVertical: spacing.sm,
   },
 });

@@ -50,7 +50,7 @@ export async function createSettlement(
   const hasExisting = existingSnap.docs.some((d) => {
     const s = d.data();
     return (
-      s.status !== 'failed' &&
+      s.status === 'pending' &&
       ((s.fromUserId === data.fromUserId && s.toUserId === data.toUserId) ||
        (s.fromUserId === data.toUserId && s.toUserId === data.fromUserId))
     );

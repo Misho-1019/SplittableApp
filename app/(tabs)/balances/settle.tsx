@@ -67,7 +67,7 @@ export default function SettleUpScreen() {
       }
     }
     check();
-  }, [params.groupId, params.toUserId, user?.id]);
+  }, [params.groupId, params.toUserId, user?.id, isReceiving]);
 
   const openConfirm = (
     title: string,
@@ -115,8 +115,8 @@ export default function SettleUpScreen() {
         'success',
       );
       setTimeout(() => router.replace('/(tabs)/balances'), 300);
-    } catch {
-      toast.showToast('Failed to record settlement. Please try again.', 'error');
+    } catch (err) {
+      toast.showToast(err instanceof Error ? err.message : 'Failed to record settlement.', 'error');
       setSaving(false);
     }
   };

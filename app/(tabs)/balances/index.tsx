@@ -18,9 +18,10 @@ import {
 } from '@/utils/calculateBalances';
 import type { BalanceFromPerspective } from '@/utils/calculateBalances';
 import { useTheme } from '@/context/ThemeContext';
+import { usePreferences } from '@/context/PreferencesContext';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/config/theme';
 import type { Settlement } from '@/types';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 
 type ListItem =
   | { type: 'divider'; key: string; label: string }
@@ -33,6 +34,7 @@ export default function BalancesListScreen() {
   const { groups } = useGroups(user?.id);
   const { balances, allExpenses, loading, error, refresh } = useBalances(groups);
   const { colors } = useTheme();
+  const { currency } = usePreferences();
   const [settlements, setSettlements] = useState<Settlement[]>([]);
   const [loadingSettlements, setLoadingSettlements] = useState(true);
 
@@ -55,10 +57,6 @@ export default function BalancesListScreen() {
     }
   }, [user?.id, groups.map((g) => g.id).join(',')]);
 
-  useEffect(() => {
-    loadSettlements();
-  }, [loadSettlements]);
-
   useFocusEffect(
     useCallback(() => {
       refresh();
@@ -78,7 +76,7 @@ export default function BalancesListScreen() {
         groupExpenses,
         group.id,
         group.name,
-        'USD',
+        currency.code,
         group.members.map((id) => ({ id, displayName: group.memberNames[id] ?? id })),
         user.id,
         groupSettlements,
@@ -177,7 +175,7 @@ export default function BalancesListScreen() {
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
             <View style={styles.headerSection}>
-              <BalanceSummaryCard netBalance={netBalance} currency="USD" />
+              <BalanceSummaryCard netBalance={netBalance} currency={currency.code} />
             </View>
           }
           renderItem={({ item }) => {
