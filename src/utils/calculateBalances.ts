@@ -186,13 +186,18 @@ export interface BalanceFromPerspective {
 }
 
 /**
+ * DEPRECATED — use getUserInvolvedBalances instead.
+ *
  * Converts raw Balance objects into a perspective-aware list for the given user.
+ *
+ * WARNING: This function takes GROUP-level net balances and interprets them
+ * as PAIRWISE debts. For groups with 3+ members, this produces incorrect
+ * results — a person's group-level netBalance includes debts from all other
+ * members, not just the current user.
  *
  * - direction === 'receive'  →  The OTHER person owes the current user money.
  * - direction === 'pay'      →  The current user owes the OTHER person money.
  * - `amount` is always a positive absolute value.
- *
- * This replaces manual sign-flipping (`-b.netBalance`) scattered across screens.
  */
 export function getBalancesFromPerspective(
   balances: Balance[],

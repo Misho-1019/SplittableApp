@@ -1,5 +1,6 @@
 import { View, Text, FlatList, StyleSheet, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '@/hooks/useAuth';
 import { useGroups } from '@/hooks/useGroups';
 import { useBalances } from '@/hooks/useBalances';
@@ -57,6 +58,13 @@ export default function BalancesListScreen() {
   useEffect(() => {
     loadSettlements();
   }, [loadSettlements]);
+
+  useFocusEffect(
+    useCallback(() => {
+      refresh();
+      loadSettlements();
+    }, []),
+  );
 
   const netBalance = getOverallNetBalance(balances, user?.id ?? '');
 

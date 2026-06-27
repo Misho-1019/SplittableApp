@@ -75,6 +75,10 @@ export async function createSettlement(
       settlement.status === 'completed' ? serverTimestamp() : null,
   });
 
+  await updateDoc(doc(db, 'groups', groupId), {
+    updatedAt: serverTimestamp(),
+  });
+
   return {
     ...settlement,
     createdAt: Timestamp.now(),

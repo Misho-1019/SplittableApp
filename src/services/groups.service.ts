@@ -191,6 +191,21 @@ export async function removeMemberFromGroup(
 ): Promise<void> {
   const groupRef = doc(db, 'groups', groupId);
 
+  // Check if the member has any expense involvement
+  const expensesSnap = await getDocs(
+    collection(db, 'groups', groupId, 'expenses'),
+  );
+  const hasInvolvement = expensesSnap.docs.some((d) => {
+    const data = d.data();
+    return (
+      data.paidBy === userId ||
+      (data.splitDetails as Array<{ userId: string }>)?.some((s) => s.userId === userId)
+    );
+  });
+  if (hasInvolvement) {
+    throw new Error('Cannot remove a member with outstanding expenses. Settle all balances first.');
+  }
+
   await updateDoc(groupRef, {
     members: arrayRemove(userId),
     [`memberNames.${userId}`]: deleteField(),
