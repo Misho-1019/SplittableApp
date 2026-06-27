@@ -42,7 +42,12 @@ export default function ExpenseDetailScreen() {
     async function load() {
       const fetched = await getExpense(groupId, expenseId);
       if (!cancelled) {
-        setExpense(fetched);
+        // Auth check: verify user is participant in this expense
+        if (fetched && user?.id && fetched.paidBy !== user.id && !fetched.splitDetails.some(s => s.userId === user.id)) {
+          setExpense(null);
+        } else {
+          setExpense(fetched);
+        }
         setLoading(false);
       }
     }
@@ -145,19 +150,6 @@ export default function ExpenseDetailScreen() {
             </Text>
           </Card>
         ))}
-
-        {expense.receiptPhotoURL && (
-          <>
-            <Divider label="Receipt" />
-            <Card padded={false} style={styles.receiptContainer}>
-              <Image
-                source={{ uri: expense.receiptPhotoURL }}
-                style={styles.receiptImage}
-                resizeMode="contain"
-              />
-            </Card>
-          </>
-        )}
       </ScrollView>
     </View>
   );

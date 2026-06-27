@@ -251,7 +251,9 @@ export default function GroupDetailScreen() {
         )}
 
         {expenses.length > 0 && (
-          <ExpenseChart expenses={expenses} />
+          <ExpenseChart expenses={expenses.filter((e) =>
+            e.paidBy === user?.id || e.splitDetails.some((s) => s.userId === user?.id)
+          )} />
         )}
 
         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Members</Text>

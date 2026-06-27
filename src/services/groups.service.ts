@@ -11,6 +11,7 @@ import {
   query,
   where,
   orderBy,
+  limit,
   onSnapshot,
   serverTimestamp,
   arrayUnion,
@@ -154,6 +155,9 @@ export async function addMemberToGroup(
   userId: string,
   displayName: string,
 ): Promise<void> {
+  const userSnap = await getDoc(doc(db, 'users', userId));
+  if (!userSnap.exists()) throw new Error('User does not exist.');
+
   const groupRef = doc(db, 'groups', groupId);
 
   await updateDoc(groupRef, {
@@ -161,6 +165,24 @@ export async function addMemberToGroup(
     [`memberNames.${userId}`]: displayName,
     updatedAt: serverTimestamp(),
   });
+}
+
+export async function joinGroupByInviteCode(
+  inviteCode: string,
+  userId: string,
+  displayName: string,
+): Promise<Group> {
+  const q = query(
+    collection(db, 'groups'),
+    where('inviteCode', '==', inviteCode.trim().toUpperCase()),
+    limit(1),
+  );
+  const snap = await getDocs(q);
+  if (snap.empty) throw new Error('Group not found with that invite code.');
+
+  const group = buildGroupFromDoc(snap.docs[0].id, snap.docs[0].data());
+  await addMemberToGroup(group.id, userId, displayName);
+  return group;
 }
 
 export async function removeMemberFromGroup(

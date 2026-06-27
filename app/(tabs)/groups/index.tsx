@@ -1,15 +1,16 @@
 import { useState } from 'react';
-import { View, FlatList, Text, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native';
+import { View, FlatList, Text, TouchableOpacity, StyleSheet, RefreshControl, Alert, Modal, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
 import { useGroups } from '@/hooks/useGroups';
-import { deleteGroup } from '@/services/groups.service';
+import { deleteGroup, joinGroupByInviteCode } from '@/services/groups.service';
 import { GroupCard } from '@/components/groups/GroupCard';
 import { Header } from '@/components/shared/Header';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { GroupCardSkeleton } from '@/components/shared/SkeletonRow';
 import { ConfirmModal } from '@/components/shared/ConfirmModal';
+import { Button } from '@/components/shared/Button';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { useTheme } from '@/context/ThemeContext';
 import { fontSize, fontWeight, spacing, borderRadius } from '@/config/theme';
@@ -19,6 +20,9 @@ export default function GroupListScreen() {
   const { user } = useAuth();
   const { groups, loading, error } = useGroups(user?.id);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [showJoinModal, setShowJoinModal] = useState(false);
+  const [joinCode, setJoinCode] = useState('');
+  const [joining, setJoining] = useState(false);
   const { colors } = useTheme();
 
   const handleDelete = async () => {
@@ -91,6 +95,14 @@ export default function GroupListScreen() {
               </Text>
             </View>
           </View>
+
+          <TouchableOpacity
+            style={[styles.joinGroupButton, { borderColor: colors.primary }]}
+            onPress={() => setShowJoinModal(true)}
+          >
+            <Ionicons name="enter-outline" size={20} color={colors.primary} />
+            <Text style={[styles.joinGroupText, { color: colors.primary }]}>Join Group with Code</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <FlatList
@@ -111,6 +123,49 @@ export default function GroupListScreen() {
         />
       )}
     </View>
+
+    <Modal
+      visible={showJoinModal}
+      transparent
+      animationType="fade"
+      onRequestClose={() => setShowJoinModal(false)}
+    >
+      <View style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}>
+        <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Join Group</Text>
+          <Text style={[styles.modalHint, { color: colors.textSecondary }]}>Enter the invite code shared by the group creator.</Text>
+          <TextInput
+            style={[styles.modalInput, { borderColor: colors.border, color: colors.textPrimary, backgroundColor: colors.surface }]}
+            value={joinCode}
+            onChangeText={setJoinCode}
+            placeholder="e.g. ABC123"
+            placeholderTextColor={colors.textMuted}
+            autoCapitalize="characters"
+          />
+          <Button
+            title={joining ? 'Joining...' : 'Join'}
+            onPress={async () => {
+              if (!joinCode.trim() || !user || joining) return;
+              setJoining(true);
+              try {
+                await joinGroupByInviteCode(joinCode.trim(), user.id, user.displayName);
+                setShowJoinModal(false);
+                setJoinCode('');
+                Alert.alert('Joined!', 'You have been added to the group.');
+              } catch (err) {
+                Alert.alert('Error', err instanceof Error ? err.message : 'Failed to join group.');
+              } finally {
+                setJoining(false);
+              }
+            }}
+            disabled={!joinCode.trim() || joining}
+          />
+          <TouchableOpacity onPress={() => setShowJoinModal(false)}>
+            <Text style={[styles.modalCancel, { color: colors.textMuted }]}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
 
     <ConfirmModal
       visible={deleteTarget !== null}
@@ -176,5 +231,57 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: fontSize.sm,
     lineHeight: 20,
+  },
+  joinGroupButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm + 4,
+    borderWidth: 1.5,
+    borderRadius: borderRadius.md,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.md,
+  },
+  joinGroupText: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 360,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  modalTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    textAlign: 'center',
+  },
+  modalHint: {
+    fontSize: fontSize.sm,
+    textAlign: 'center',
+  },
+  modalInput: {
+    borderWidth: 1.5,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 4,
+    fontSize: fontSize.lg,
+    textAlign: 'center',
+    letterSpacing: 4,
+  },
+  modalCancel: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium,
+    textAlign: 'center',
+    paddingVertical: spacing.sm,
   },
 });

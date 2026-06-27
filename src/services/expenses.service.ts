@@ -3,6 +3,7 @@ import {
   doc,
   getDoc,
   setDoc,
+  updateDoc,
   runTransaction,
   query,
   orderBy,
@@ -88,6 +89,14 @@ export async function getExpense(
   );
   if (!snap.exists()) return null;
   return buildExpenseFromDoc(snap.id, groupId, snap.data());
+}
+
+export async function updateExpense(
+  groupId: string,
+  expenseId: string,
+  data: Partial<Pick<Expense, 'description' | 'amount'>>,
+): Promise<void> {
+  await updateDoc(doc(db, 'groups', groupId, 'expenses', expenseId), data);
 }
 
 export async function deleteExpense(
