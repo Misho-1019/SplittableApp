@@ -90,14 +90,18 @@ export function applySettlementsToBalances(
 }
 
 /**
- * Computes per-pair balances for a specific user, considering only expenses
+ * Computes TRUE per-pair balances for a specific user, using only expenses
  * where the user actually participated (as payer or in splitDetails).
  *
- * Unlike getBalancesFromPerspective which shows ALL other people's raw
- * balances interpreted from your perspective, this function only shows
- * balances from expenses you were actually part of. This prevents new
- * members from seeing pre-join debts, and users from seeing balances
- * from expenses they weren't included in.
+ * Unlike the old approach which computed group-level net balances and then
+ * misinterpreted them as pairwise debts, this function directly accumulates
+ * who owes whom by iterating each expense's splitDetails.
+ *
+ * For each expense:
+ *   - If user is payer: each split member (except user) owes user their share
+ *   - If someone else is payer and user is in splits: user owes payer their share
+ *
+ * Then completed settlements between the user and each other person are applied.
  */
 export function getUserInvolvedBalances(
   expenses: Expense[],
@@ -108,50 +112,66 @@ export function getUserInvolvedBalances(
   currentUserId: string,
   settlements?: Settlement[],
 ): BalanceFromPerspective[] {
-  const involvedExpenses = expenses.filter(
-    (e) =>
-      e.paidBy === currentUserId ||
-      e.splitDetails.some((s) => s.userId === currentUserId),
-  );
+  const memberMap = new Map(members.map((m) => [m.id, m.displayName]));
+  const pairBalances = new Map<string, number>();
 
-  if (involvedExpenses.length === 0) return [];
+  for (const exp of expenses) {
+    const userIsPayer = exp.paidBy === currentUserId;
+    const userInSplit = exp.splitDetails.some((s) => s.userId === currentUserId);
 
-  let balances = calculateGroupBalances(
-    involvedExpenses,
-    groupId,
-    groupName,
-    currency,
-    members,
-  );
+    if (!userIsPayer && !userInSplit) continue;
 
-  if (settlements) {
-    const relevantSettlements = settlements.filter(
-      (s) =>
-        s.status === 'completed' &&
-        (s.fromUserId === currentUserId || s.toUserId === currentUserId),
-    );
-    balances = applySettlementsToBalances(balances, relevantSettlements);
+    if (userIsPayer) {
+      for (const split of exp.splitDetails) {
+        if (split.userId === currentUserId) continue;
+        pairBalances.set(
+          split.userId,
+          Math.round(((pairBalances.get(split.userId) ?? 0) + split.share) * 100) / 100,
+        );
+      }
+    } else if (userInSplit) {
+      const userShare = exp.splitDetails.find((s) => s.userId === currentUserId)?.share ?? 0;
+      if (exp.paidBy !== currentUserId) {
+        pairBalances.set(
+          exp.paidBy,
+          Math.round(((pairBalances.get(exp.paidBy) ?? 0) - userShare) * 100) / 100,
+        );
+      }
+    }
   }
 
-  return balances
-    .filter(
-      (b) =>
-        b.userId !== currentUserId &&
-        Math.abs(b.netBalance) > 0.01 &&
-        involvedExpenses.some(
-          (e) =>
-            (e.paidBy === b.userId || e.splitDetails.some((s) => s.userId === b.userId)) &&
-            (e.paidBy === currentUserId || e.splitDetails.some((s) => s.userId === currentUserId)),
-        ),
-    )
-    .map((b) => ({
-      userId: b.userId,
-      displayName: b.displayName,
-      groupId: b.groupId,
-      groupName: b.groupName,
-      currency: b.currency,
-      direction: b.netBalance < 0 ? 'receive' as const : 'pay' as const,
-      amount: Math.abs(b.netBalance),
+  if (settlements) {
+    for (const s of settlements) {
+      if (s.status !== 'completed') continue;
+      if (s.fromUserId !== currentUserId && s.toUserId !== currentUserId) continue;
+
+      if (s.toUserId === currentUserId) {
+        // currentUser received money → other person's debt to user is reduced
+        pairBalances.set(
+          s.fromUserId,
+          Math.round(((pairBalances.get(s.fromUserId) ?? 0) - s.amount) * 100) / 100,
+        );
+      }
+      if (s.fromUserId === currentUserId) {
+        // currentUser paid money → user's debt to other person is reduced
+        pairBalances.set(
+          s.toUserId,
+          Math.round(((pairBalances.get(s.toUserId) ?? 0) + s.amount) * 100) / 100,
+        );
+      }
+    }
+  }
+
+  return Array.from(pairBalances.entries())
+    .filter(([_, amount]) => Math.abs(amount) > 0.01)
+    .map(([userId, amount]) => ({
+      userId,
+      displayName: memberMap.get(userId) ?? userId,
+      groupId,
+      groupName,
+      currency,
+      direction: (amount > 0 ? 'receive' : 'pay') as BalanceDirection,
+      amount: Math.round(Math.abs(amount) * 100) / 100,
     }));
 }
 
