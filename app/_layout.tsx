@@ -6,6 +6,12 @@ import { AuthProvider } from '@/context/AuthContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { ToastProvider } from '@/context/ToastContext';
 import { PreferencesProvider } from '@/context/PreferencesContext';
+import { useNotifications } from '@/hooks/useNotifications';
+
+function NotificationSetup() {
+  useNotifications();
+  return null;
+}
 
 export default function RootLayout() {
   return (
@@ -14,6 +20,7 @@ export default function RootLayout() {
         <ThemeProvider>
           <ToastProvider>
             <PreferencesProvider>
+              <NotificationSetup />
               <StatusBar style="auto" />
               <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="index" />

@@ -1,7 +1,8 @@
 import * as admin from 'firebase-admin';
 import Stripe from 'stripe';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { onDocumentWritten } from 'firebase-functions/v2/firestore';
+import { onDocumentWritten, onDocumentCreated } from 'firebase-functions/v2/firestore';
+import { notifyExpenseInvolvedUsers, notifySettlementParty, notifyMemberAdded } from './notifications';
 
 admin.initializeApp();
 
@@ -174,7 +175,9 @@ export const onexpensewrite = onDocumentWritten(
   'groups/{groupId}/expenses/{expenseId}',
   async (event) => {
     const groupId = event.params.groupId;
+    const expenseId = event.params.expenseId;
 
+    // Recalculate totalExpenses
     const expensesSnapshot = await admin
       .firestore()
       .collection('groups')
@@ -187,13 +190,104 @@ export const onexpensewrite = onDocumentWritten(
       0,
     );
 
-    await admin
-      .firestore()
-      .collection('groups')
-      .doc(groupId)
-      .update({
+    const groupRef = admin.firestore().collection('groups').doc(groupId);
+    const groupDoc = await groupRef.get();
+    if (groupDoc.exists) {
+      await groupRef.update({
         totalExpenses: total,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
+    }
+
+    // Send notification on expense creation
+    const before = event.data?.before;
+    const after = event.data?.after;
+    if (!before?.exists && after?.exists) {
+      const data = after.data()!;
+      try {
+        await notifyExpenseInvolvedUsers(
+          groupId,
+          expenseId,
+          data.paidByName as string,
+          data.description as string,
+          data.amount as number,
+        );
+      } catch {
+        // Notification sending is non-critical
+      }
+    }
+  },
+);
+
+// Notify when a settlement is completed
+export const onsettlementwrite = onDocumentWritten(
+  'groups/{groupId}/settlements/{settlementId}',
+  async (event) => {
+    const before = event.data?.before;
+    const after = event.data?.after;
+    if (!after?.exists) return;
+
+    const groupId = event.params.groupId;
+    const data = after.data()!;
+
+    // Only notify on create (status: pending) or status change to completed
+    const isNew = !before?.exists;
+    const statusChanged = before?.exists && before.data()?.status !== after.data()?.status;
+
+    if (isNew || statusChanged) {
+      try {
+        const isCompleted = data.status === 'completed';
+        // Notify the 'from' user (the one who paid)
+        if (data.fromUserId) {
+          await notifySettlementParty(
+            data.fromUserId as string,
+            groupId,
+            data.toUserName as string,
+            data.amount as number,
+            isCompleted ? 'completed' : 'pending',
+          );
+        }
+        // Notify the 'to' user (the one who received)
+        if (data.toUserId) {
+          await notifySettlementParty(
+            data.toUserId as string,
+            groupId,
+            data.fromUserName as string,
+            data.amount as number,
+            isCompleted ? 'completed' : 'pending',
+          );
+        }
+      } catch {
+        // Non-critical
+      }
+    }
+  },
+);
+
+// Notify when a user is added to a group
+export const ongroupupdate = onDocumentWritten(
+  'groups/{groupId}',
+  async (event) => {
+    const before = event.data?.before;
+    const after = event.data?.after;
+    if (!before?.exists || !after?.exists) return;
+
+    const beforeMembers: string[] = before.data()?.members ?? [];
+    const afterMembers: string[] = after.data()?.members ?? [];
+
+    // Detect new members
+    const newMembers = afterMembers.filter((id) => !beforeMembers.includes(id));
+    if (newMembers.length === 0 && after.data()?.createdBy === before.data()?.createdBy) return;
+
+    const addedByName = after.data()?.memberNames?.[before.data()?.createdBy] ?? 'Someone';
+    const groupId = event.params.groupId;
+
+    for (const newUserId of newMembers) {
+      try {
+        await notifyMemberAdded(newUserId, groupId, addedByName);
+      } catch {
+        // Non-critical
+      }
+    }
   },
 );
