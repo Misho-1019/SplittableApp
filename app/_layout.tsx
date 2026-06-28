@@ -15,7 +15,7 @@ function NotificationSetup() {
   return null;
 }
 
-export default function RootLayout() {
+function FontLoader({ children }: { children: React.ReactNode }) {
   const [fontsLoaded] = useFonts({
     Ionicons: require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf'),
   });
@@ -24,19 +24,25 @@ export default function RootLayout() {
     return <LoadingSpinner fullScreen />;
   }
 
+  return <>{children}</>;
+}
+
+export default function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.container}>
       <AuthProvider>
         <ThemeProvider>
           <ToastProvider>
             <PreferencesProvider>
-              <NotificationSetup />
-              <StatusBar style="auto" />
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="index" />
-                <Stack.Screen name="(auth)" />
-                <Stack.Screen name="(tabs)" />
-              </Stack>
+              <FontLoader>
+                <NotificationSetup />
+                <StatusBar style="auto" />
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="index" />
+                  <Stack.Screen name="(auth)" />
+                  <Stack.Screen name="(tabs)" />
+                </Stack>
+              </FontLoader>
             </PreferencesProvider>
           </ToastProvider>
         </ThemeProvider>
