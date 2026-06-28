@@ -1,12 +1,14 @@
 import { Stack } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
+import { useFonts } from 'expo-font';
 import { AuthProvider } from '@/context/AuthContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { ToastProvider } from '@/context/ToastContext';
 import { PreferencesProvider } from '@/context/PreferencesContext';
 import { useNotifications } from '@/hooks/useNotifications';
+import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 
 function NotificationSetup() {
   useNotifications();
@@ -14,6 +16,14 @@ function NotificationSetup() {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    Ionicons: require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf'),
+  });
+
+  if (!fontsLoaded && Platform.OS === 'web') {
+    return <LoadingSpinner fullScreen />;
+  }
+
   return (
     <GestureHandlerRootView style={styles.container}>
       <AuthProvider>
