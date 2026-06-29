@@ -94,13 +94,30 @@ The app handles the hard case correctly: when Pesho joins Misho and John's group
 
 ## 🖼️ Screenshots
 
-<!-- Add your screenshots here -->
-<!-- Example: ![Login Screen](assets/screenshots/login.png) -->
-<!-- Example: ![Group Detail](assets/screenshots/group-detail.png) -->
-<!-- Example: ![Expense Form with Member Selection](assets/screenshots/add-expense.png) -->
-<!-- Example: ![Balances with Per-Pair Display](assets/screenshots/balances.png) -->
-<!-- Example: ![Settlement Flow](assets/screenshots/settle.png) -->
-<!-- Example: ![Settings with Currency Picker](assets/screenshots/settings.png) -->
+### 1️⃣ Groups List — Empty State with Onboarding
+
+![Onboarding](views/Screenshot%202026-06-29%20182504.png)
+
+### 2️⃣ Group Detail — Balances & Members
+
+![Group Detail](views/Screenshot%202026-06-29%20182517.png)
+![Group Detail](views/Screenshot%202026-06-29%20182531.png)
+
+### 3️⃣ Add Expense — Selectable Member Split (Unique Feature)
+
+![Add Expense](views/Screenshot%202026-06-29%20182607.png)
+
+### 4️⃣ Balances — Per-Pair Display
+
+![Balances](views/Screenshot%202026-06-29%20182735.png)
+
+### 5️⃣ Settle Up — Direction-Aware Flow
+
+![Settle Up](views/Screenshot%202026-06-29%20182814.png)
+
+### 6️⃣ Settings — Currency Picker
+
+![Settings](views/Screenshot%202026-06-29%20182824.png)
 
 ---
 
