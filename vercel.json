@@ -1,5 +1,8 @@
 {
   "rewrites": [
-    { "source": "/((?!assets|_expo|favicon).*)", "destination": "/index.html" }
+    { "source": "/assets/(.*)", "destination": "/assets/$1" },
+    { "source": "/_expo/(.*)", "destination": "/_expo/$1" },
+    { "source": "/favicon.ico", "destination": "/favicon.ico" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
